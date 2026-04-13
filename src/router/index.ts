@@ -13,6 +13,11 @@ const router = createRouter({
       component: () => import('@/layouts/MainLayout.vue'),
       children: [
         {
+          path: '',
+          name: 'employee',
+          component: () => import('@/views/Employee.vue'),
+        },
+        {
           path: 'validation',
           name: 'validation',
           component: () => import('@/views/Validation.vue'),
@@ -57,15 +62,35 @@ const router = createRouter({
           ],
         },
         {
-          path: '',
-          name: 'employee',
-          component: () => import('@/views/Employee.vue'),
+          path: 'meeting',
+          children: [
+            {
+              path: '',
+              name: 'meeting',
+              component: () => import('@/views/Meeting.vue'),
+            },
+          ],
         },
-        // {
-        //   path: 'information',
-        //   name: 'information',
-        //   component: () => import('@/views/Information.vue'),
-        // }
+        {
+          path: 'mission',
+          children: [
+            {
+              path: '',
+              name: 'mission',
+              component: () => import('@/views/Mission.vue'),
+            },
+          ],
+        },
+        {
+          path: 'telework',
+          children: [
+            {
+              path: '',
+              name: 'telework',
+              component: () => import('@/views/Telework.vue'),
+            },
+          ],
+        },
       ],
     },
   ],

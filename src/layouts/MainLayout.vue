@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ArrowLeftEndOnRectangleIcon, CalendarDaysIcon, CheckBadgeIcon, DocumentTextIcon, IdentificationIcon } from '@heroicons/vue/16/solid';
+import { ArrowLeftEndOnRectangleIcon, BriefcaseIcon, CalendarDaysIcon, ChatBubbleBottomCenterIcon, ChatBubbleLeftEllipsisIcon, CheckBadgeIcon, DocumentTextIcon, HomeModernIcon, IdentificationIcon } from '@heroicons/vue/16/solid';
 import { computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
@@ -8,7 +8,7 @@ const router = useRouter();
 
 const navigationItems = computed(() => [
     {
-        label: 'Informations employe',
+        label: 'Informations employé',
         to: { name: 'employee' },
         icon: IdentificationIcon,
         active: route.name === 'employee',
@@ -24,6 +24,24 @@ const navigationItems = computed(() => [
         to: { name: 'leave-validation' },
         icon: CheckBadgeIcon,
         active: route.path.includes('/validation'),
+    },
+    {
+        label: 'Réunion',
+        to: { name: 'meeting'},
+        icon: ChatBubbleLeftEllipsisIcon,
+        active: route.path.includes('/meeting'),
+    },
+    {
+        label: 'Télétravail',
+        to: { name: 'telework' },
+        icon: HomeModernIcon,
+        active: route.path.includes('/telework'),
+    },
+    {
+        label: 'Mission',
+        to: { name: 'mission' },
+        icon: BriefcaseIcon,
+        active: route.path.includes('/mission'),
     },
     // {
     //     label: 'Planning',

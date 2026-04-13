@@ -1,59 +1,43 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { STATUS_CHOICES } from "@/enums/choices";
 import type { AuthorizationRequest } from '@/types/Authorization';
+import { calculatedHourDuration } from '@/utils/calculDuration';
+import AuthorizationService from '@/services/AuthorizationServices';
+import { getStatusStyle } from '@/utils/styleUtils';
 
-const authorizations = ref<AuthorizationRequest[]>([
-    {
-        id: '1',
-        employee: 'Tendry',
-        date_request: '2026-04-11',
-        reason: 'Rendez-vous médical',
-        validation_status: STATUS_CHOICES.PENDING,
-        departure_time: '14:00',
-        return_time: '16:00',
-        duration: 2
-    }
-]);
+const employee = ref('');
+
+const authorizations = ref<AuthorizationRequest[]>([]);
 
 const authOnCreate = ref<Partial<AuthorizationRequest>>({
+    employee: employee.value,
     date_request: new Date().toISOString().substr(0, 10),
     departure_time: '',
     return_time: '',
     validation_status: STATUS_CHOICES.PENDING
 });
 
-// Calcul dynamique de la durée (en heures)
-const calculatedDuration = computed(() => {
-    if (!authOnCreate.value.departure_time || !authOnCreate.value.return_time) return 0;
-
-    const [startH, startM] = authOnCreate.value.departure_time.split(':').map(Number);
-    const [endH, endM] = authOnCreate.value.return_time.split(':').map(Number);
-
-    let startInMinutes = 0;
-    let endInMinutes = 0;
-
-    if (startH && startM) startInMinutes = startH * 60 + startM;
-    if (endH && endM) endInMinutes = endH * 60 + endM;
-
-    if (endInMinutes <= startInMinutes) return 0;
-
-    const diffInMinutes = endInMinutes - startInMinutes;
-    return parseFloat((diffInMinutes / 60).toFixed(2)); // Retourne par ex: 1.5 pour 1h30
-});
-
-const getStatusStyle = (status: STATUS_CHOICES) => {
-    switch (status) {
-        case STATUS_CHOICES.PENDING: return 'bg-amber-100 text-amber-700 border-amber-200';
-        case STATUS_CHOICES.ACCEPTED: return 'bg-emerald-100 text-emerald-700 border-emerald-200';
-        case STATUS_CHOICES.REJECTED: return 'bg-red-100 text-red-700 border-red-200';
-        default: return 'bg-slate-100 text-slate-700 border-slate-200';
-    }
-};
+const duration = computed(() => calculatedHourDuration(authOnCreate.value));
 
 const handleCancel = (id: string | undefined) => {
     console.log("Annulation de la demande:", id);
 };
+
+async function loadData() {
+    const matricule = localStorage.getItem('matricule');
+    if (matricule && matricule !== '') {
+        employee.value = matricule;
+        try {
+            const res = await AuthorizationService.getEmployeeAuthorizations(matricule);
+            authorizations.value = res;
+        } catch (error) {
+            
+        }
+    }
+}
+
+onMounted(loadData)
 </script>
 
 <template>
@@ -169,7 +153,7 @@ const handleCancel = (id: string | undefined) => {
                     <div
                         class="bg-indigo-50 rounded-2xl p-4 flex justify-between items-center border border-indigo-100">
                         <span class="text-indigo-700 text-xs font-black uppercase italic">Durée Totale</span>
-                        <span class="text-indigo-700 font-black text-lg">{{ calculatedDuration }} h</span>
+                        <span class="text-indigo-700 font-black text-lg">{{ duration }} h</span>
                     </div>
 
                     <div class="space-y-2">

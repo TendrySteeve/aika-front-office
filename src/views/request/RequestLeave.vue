@@ -2,6 +2,8 @@
 import { computed, ref } from 'vue';
 import { STATUS_CHOICES, PERIOD_LEAVE_CHOICES } from "@/enums/choices";
 import type { Leave } from '@/types/Leave';
+import { getStatusStyle } from '@/utils/styleUtils';
+import { calculatedDayDuration } from '@/utils/calculDuration';
 
 const leaves = ref<Leave[]>([
     { id: 1, employee: 'Tendry', date_request: '2026-04-10', leave_start: '2026-05-01', leave_end: '2026-05-05', start_period: PERIOD_LEAVE_CHOICES.FULL, end_period: PERIOD_LEAVE_CHOICES.FULL, duration: 5, reason: 'Repos annuel', validation_status: STATUS_CHOICES.PENDING }
@@ -13,42 +15,7 @@ const leaveOnCreate = ref<Partial<Leave>>({
     validation_status: STATUS_CHOICES.PENDING
 });
 
-const getStatusStyle = (status: STATUS_CHOICES) => {
-    switch (status) {
-        case STATUS_CHOICES.PENDING: return 'bg-amber-100 text-amber-700 border-amber-200';
-        case STATUS_CHOICES.ACCEPTED: return 'bg-emerald-100 text-emerald-700 border-emerald-200';
-        case STATUS_CHOICES.REJECTED: return 'bg-red-100 text-red-700 border-red-200';
-        default: return 'bg-slate-100 text-slate-700 border-slate-200';
-    }
-};
-
-const calculatedDuration = computed(() => {
-    if (!leaveOnCreate.value.leave_start || !leaveOnCreate.value.leave_end) return 0;
-
-    const start = new Date(leaveOnCreate.value.leave_start);
-    const end = new Date(leaveOnCreate.value.leave_end);
-
-    if (end < start) return 0;
-
-    const diffTime = Math.abs(end.getTime() - start.getTime());
-    let days = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-
-    if (leaveOnCreate.value.start_period !== PERIOD_LEAVE_CHOICES.FULL) {
-        days -= 0.5;
-    }
-
-    if (leaveOnCreate.value.leave_start === leaveOnCreate.value.leave_end) {
-        if (leaveOnCreate.value.start_period !== PERIOD_LEAVE_CHOICES.FULL) {
-            return 0.5;
-        }
-    } else {
-        if (leaveOnCreate.value.end_period !== PERIOD_LEAVE_CHOICES.FULL) {
-            days -= 0.5;
-        }
-    }
-
-    return days > 0 ? days : 0;
-});
+const duration = computed(() => calculatedDayDuration(leaveOnCreate.value));
 
 const handleCancel = async (id?: number) => { }
 
@@ -199,26 +166,26 @@ const handleCancel = async (id?: number) => { }
                     </div>
 
                     <div class="rounded-2xl p-4 flex justify-between items-center border transition-all duration-300"
-                        :class="calculatedDuration > 0
+                        :class="duration > 0
                             ? 'bg-blue-50 border-blue-100 scale-100 shadow-sm'
                             : 'bg-slate-50 border-slate-100 opacity-60 scale-95'">
                         <div class="flex items-center gap-3">
                             <div class="w-2 h-2 rounded-full"
-                                :class="calculatedDuration > 0 ? 'bg-blue-500 animate-pulse' : 'bg-slate-300'"></div>
+                                :class="duration > 0 ? 'bg-blue-500 animate-pulse' : 'bg-slate-300'"></div>
                             <span class="text-xs font-black uppercase italic"
-                                :class="calculatedDuration > 0 ? 'text-blue-700' : 'text-slate-400'">
+                                :class="duration > 0 ? 'text-blue-700' : 'text-slate-400'">
                                 Durée Estimée
                             </span>
                         </div>
 
                         <div class="flex items-baseline gap-1">
                             <span class="font-black text-2xl tracking-tighter transition-colors"
-                                :class="calculatedDuration > 0 ? 'text-blue-700' : 'text-slate-400'">
-                                {{ calculatedDuration }}
+                                :class="duration > 0 ? 'text-blue-700' : 'text-slate-400'">
+                                {{ duration }}
                             </span>
                             <span class="text-[10px] font-black uppercase"
-                                :class="calculatedDuration > 0 ? 'text-blue-600/60' : 'text-slate-400'">
-                                {{ calculatedDuration > 1 ? 'Jours' : 'Jour' }}
+                                :class="duration > 0 ? 'text-blue-600/60' : 'text-slate-400'">
+                                {{ duration > 1 ? 'Jours' : 'Jour' }}
                             </span>
                         </div>
                     </div>

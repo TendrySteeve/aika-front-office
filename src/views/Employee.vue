@@ -8,9 +8,7 @@ const personalInfo = ref<Partial<PersonalInfo>>({});
 const coordinate = ref<Partial<Coordinate>>({});
 const administrative = ref<Partial<Administrative>>({});
 const professionalInfo = ref<Partial<ProfessionalInfo>>({});
-const contract = ref<Partial<Contract>>({});
-const bankInfo = ref<Partial<BankInfo>>({});
-
+    
 const contracts = ref<Partial<Contract>[]>([{ contract_type: CONTRACT_TYPE_CHOICES.CDD, start_date: '', work_location: '' }]);
 const degrees = ref<Partial<Degree>[]>([{ degree_name: '', institution: '', graduation_year: '' }]);
 const trainings = ref<Partial<Training>[]>([{ training_name: '', starts_on: '', ends_on: '', location: '' }]);
