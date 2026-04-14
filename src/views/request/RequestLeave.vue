@@ -1,24 +1,66 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
-import { STATUS_CHOICES, PERIOD_LEAVE_CHOICES } from "@/enums/choices";
+import { computed, onMounted, ref } from 'vue';
+import { STATUS_CHOICES, PERIOD_CHOICES } from "@/enums/choices";
 import type { Leave } from '@/types/Leave';
 import { getStatusStyle } from '@/utils/styleUtils';
 import { calculatedDayDuration } from '@/utils/calculDuration';
+import LeaveServices from '@/services/LeaveServices';
 
-const leaves = ref<Leave[]>([
-    { id: 1, employee: 'Tendry', date_request: '2026-04-10', leave_start: '2026-05-01', leave_end: '2026-05-05', start_period: PERIOD_LEAVE_CHOICES.FULL, end_period: PERIOD_LEAVE_CHOICES.FULL, duration: 5, reason: 'Repos annuel', validation_status: STATUS_CHOICES.PENDING }
-]);
+const leaves = ref<Leave[]>([]);
+const employee = ref<string>('');
 
-const leaveOnCreate = ref<Partial<Leave>>({
-    start_period: PERIOD_LEAVE_CHOICES.FULL,
-    end_period: PERIOD_LEAVE_CHOICES.FULL,
+const leaveOnCreate = ref<Leave>({
+    employee: '',
+    date_request: String(new Date().toISOString().split('T')[0]),
+    leave_start: '',
+    leave_end: '',
+    start_period: PERIOD_CHOICES.FULL,
+    end_period: PERIOD_CHOICES.FULL,
+    duration: 0,
+    reason: '',
     validation_status: STATUS_CHOICES.PENDING
 });
 
 const duration = computed(() => calculatedDayDuration(leaveOnCreate.value));
 
-const handleCancel = async (id?: number) => { }
+async function fetchEmployeeLeaves() {
+    const matricule = localStorage.getItem('matricule');
+    if (!matricule) return 'Aucun employé conneté'
+    employee.value = matricule;
+    try {
+        const res = await LeaveServices.getEmployeeLeaves(matricule);
+        leaves.value = res;
+    } catch (error) {
 
+    }
+}
+
+const createLeave = async () => {
+    leaveOnCreate.value = {
+        ...leaveOnCreate.value,
+        employee: employee.value,
+        duration: duration.value
+    }
+
+    try {
+        await LeaveServices.post(leaveOnCreate.value)
+        await fetchEmployeeLeaves()
+    } catch (error) {
+
+    }
+}
+
+const cancelEmployeeLeave = async (id?: number) => { 
+    if (!id) return 'aucun identifiant du congé'
+    try {
+        await LeaveServices.cancelLeave(id);
+        await fetchEmployeeLeaves()
+    } catch (error) {
+        
+    }
+}
+
+onMounted(fetchEmployeeLeaves)
 </script>
 
 <template>
@@ -36,7 +78,7 @@ const handleCancel = async (id?: number) => { }
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 gap-4 ">
+            <div class="grid grid-cols-1 gap-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
                 <div v-for="leave in leaves" :key="leave.id"
                     class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm hover:shadow-md transition-all group relative overflow-hidden">
 
@@ -63,7 +105,7 @@ const handleCancel = async (id?: number) => { }
 
                             <div class="flex items-center gap-3">
                                 <button v-if="leave.validation_status === STATUS_CHOICES.PENDING"
-                                    @click="handleCancel(leave.id)"
+                                    @click="cancelEmployeeLeave(leave.id)"
                                     class="flex items-center gap-2 px-3 py-2 rounded-xl text-red-500 hover:bg-red-50 transition-colors group/btn">
                                     <svg class="w-4 h-4 transition-transform group-hover/btn:rotate-90" fill="none"
                                         stroke="currentColor" viewBox="0 0 24 24">
@@ -136,7 +178,7 @@ const handleCancel = async (id?: number) => { }
                     <h2 class="text-xl font-black text-slate-800 uppercase tracking-tight">Nouvelle Demande</h2>
                 </div>
 
-                <form class="space-y-6">
+                <form class="space-y-6" @submit.prevent="createLeave">
                     <div class="grid grid-cols-1 gap-6">
                         <div class="space-y-2">
                             <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Début du
@@ -146,7 +188,7 @@ const handleCancel = async (id?: number) => { }
                                     class="flex-1 bg-slate-50 border-2 border-slate-100 rounded-2xl px-4 py-3 text-sm font-bold outline-none focus:border-blue-500 focus:bg-white transition-all">
                                 <select v-model="leaveOnCreate.start_period"
                                     class="w-24 bg-slate-50 border-2 border-slate-100 rounded-2xl px-2 py-3 text-[10px] font-black uppercase outline-none focus:border-blue-500">
-                                    <option v-for="p in PERIOD_LEAVE_CHOICES" :key="p" :value="p">{{ p }}</option>
+                                    <option v-for="p in PERIOD_CHOICES" :key="p" :value="p">{{ p }}</option>
                                 </select>
                             </div>
                         </div>
@@ -159,7 +201,7 @@ const handleCancel = async (id?: number) => { }
                                     class="flex-1 bg-slate-50 border-2 border-slate-100 rounded-2xl px-4 py-3 text-sm font-bold outline-none focus:border-blue-500 focus:bg-white transition-all">
                                 <select v-model="leaveOnCreate.end_period"
                                     class="w-24 bg-slate-50 border-2 border-slate-100 rounded-2xl px-2 py-3 text-[10px] font-black uppercase outline-none focus:border-blue-500">
-                                    <option v-for="p in PERIOD_LEAVE_CHOICES" :key="p" :value="p">{{ p }}</option>
+                                    <option v-for="p in PERIOD_CHOICES" :key="p" :value="p">{{ p }}</option>
                                 </select>
                             </div>
                         </div>
@@ -199,11 +241,8 @@ const handleCancel = async (id?: number) => { }
                     </div>
 
                     <button type="submit"
-                        class="w-full bg-slate-900 hover:bg-blue-600 text-white font-black uppercase tracking-[0.2em] py-4 rounded-2xl shadow-xl hover:shadow-blue-200 transition-all duration-300 flex items-center justify-center gap-3">
+                        class="w-full px-6 py-3 rounded-2xl bg-blue-600 text-white border border-blue-500 hover:bg-blue-700 font-black text-[10px] uppercase tracking-widest shadow-lg shadow-blue-100 transition-all duration-300">
                         Envoyer la demande
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path d="M14 5l7 7m0 0l-7 7m7-7H3" stroke-width="2.5" />
-                        </svg>
                     </button>
                 </form>
             </div>

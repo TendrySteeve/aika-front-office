@@ -1,7 +1,7 @@
 import type { STATUS_CHOICES } from "@/enums/choices";
 
 export interface AuthorizationRequest {
-    id?: string;
+    id?: number;
     employee: string;
     date_request: string;
     reason: string;

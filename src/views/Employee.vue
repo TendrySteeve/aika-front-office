@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import type { Administrative, BankInfo, Contract, Degree, Employee, PersonalInfo, ProfessionalInfo, Skill, Training, Coordinate } from '@/types/Employee';
+import type { Administrative, Contract, Degree, Employee, PersonalInfo, ProfessionalInfo, Skill, Training, Coordinate } from '@/types/Employee';
 import { GENDER_CHOICES, MARITAL_STATUS_CHOICES, CONTRACT_TYPE_CHOICES, LEVEL_SKILL_CHOICES } from "@/enums/choices";
 
 const employee = ref<Partial<Employee>>({});
@@ -8,7 +8,7 @@ const personalInfo = ref<Partial<PersonalInfo>>({});
 const coordinate = ref<Partial<Coordinate>>({});
 const administrative = ref<Partial<Administrative>>({});
 const professionalInfo = ref<Partial<ProfessionalInfo>>({});
-    
+
 const contracts = ref<Partial<Contract>[]>([{ contract_type: CONTRACT_TYPE_CHOICES.CDD, start_date: '', work_location: '' }]);
 const degrees = ref<Partial<Degree>[]>([{ degree_name: '', institution: '', graduation_year: '' }]);
 const trainings = ref<Partial<Training>[]>([{ training_name: '', starts_on: '', ends_on: '', location: '' }]);
@@ -100,7 +100,7 @@ const removeEntry = (list: any[], index: number) => list.splice(index, 1);
                             <select v-model="personalInfo.marital_status"
                                 class="w-full px-5 py-3.5 rounded-xl border-2 border-slate-100 bg-slate-50/30 text-sm outline-none focus:border-blue-500 focus:bg-white appearance-none cursor-pointer">
                                 <option v-for="status in MARITAL_STATUS_CHOICES" :key="status" :value="status">{{ status
-                                }}</option>
+                                    }}</option>
                             </select>
                         </div>
                         <div class="flex flex-col gap-2">

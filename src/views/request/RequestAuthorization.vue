@@ -7,37 +7,60 @@ import AuthorizationService from '@/services/AuthorizationServices';
 import { getStatusStyle } from '@/utils/styleUtils';
 
 const employee = ref('');
-
 const authorizations = ref<AuthorizationRequest[]>([]);
 
-const authOnCreate = ref<Partial<AuthorizationRequest>>({
-    employee: employee.value,
-    date_request: new Date().toISOString().substr(0, 10),
+const authOnCreate = ref<AuthorizationRequest>({
+    employee: '',
+    date_request: String(new Date().toISOString().split('T')[0]),
+    reason: '',
+    validation_status: STATUS_CHOICES.PENDING,
     departure_time: '',
     return_time: '',
-    validation_status: STATUS_CHOICES.PENDING
+    duration: 0
 });
 
 const duration = computed(() => calculatedHourDuration(authOnCreate.value));
 
-const handleCancel = (id: string | undefined) => {
-    console.log("Annulation de la demande:", id);
-};
 
-async function loadData() {
+async function fetchEmployeeAuthorizations() {
     const matricule = localStorage.getItem('matricule');
-    if (matricule && matricule !== '') {
-        employee.value = matricule;
-        try {
-            const res = await AuthorizationService.getEmployeeAuthorizations(matricule);
-            authorizations.value = res;
-        } catch (error) {
-            
-        }
+    if (!matricule) return 'Aucun employé conneté'
+    employee.value = matricule;
+    try {
+        const res = await AuthorizationService.getEmployeeAuthorizations(matricule);
+        authorizations.value = res;
+    } catch (error) {
+        
     }
 }
 
-onMounted(loadData)
+const createLeave = async () => {
+    authOnCreate.value = {
+        ...authOnCreate.value,
+        employee: employee.value,
+        duration: duration.value
+    }
+
+    try {
+        await AuthorizationService.post(authOnCreate.value)
+        await fetchEmployeeAuthorizations()
+    } catch (error) {
+
+    }
+}
+
+const cancelEmployeeAuthorization = async (id?: number) => {
+     if (!id) return 'aucun identifiant de l\'autorisation'
+    try {
+        await AuthorizationService.cancelAuhtorization(id);
+        await fetchEmployeeAuthorizations()
+    } catch (error) {
+        
+    }
+};
+
+
+onMounted(fetchEmployeeAuthorizations)
 </script>
 
 <template>
@@ -55,7 +78,7 @@ onMounted(loadData)
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 gap-4 max-h-[70vh] overflow-y-auto pr-2 custom-scrollbar">
+            <div class="grid grid-cols-1 gap-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
                 <div v-for="auth in authorizations" :key="auth.id"
                     class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm hover:shadow-md transition-all group relative overflow-hidden">
 
@@ -79,7 +102,7 @@ onMounted(loadData)
 
                             <div class="flex items-center gap-3">
                                 <button v-if="auth.validation_status === STATUS_CHOICES.PENDING"
-                                    @click="handleCancel(auth.id)"
+                                    @click="cancelEmployeeAuthorization(auth.id)"
                                     class="text-red-500 hover:bg-red-50 p-2 rounded-xl transition-colors group/btn">
                                     <svg class="w-5 h-5 transition-transform group-hover/btn:rotate-90" fill="none"
                                         stroke="currentColor" viewBox="0 0 24 24">
@@ -127,7 +150,7 @@ onMounted(loadData)
                     <h2 class="text-xl font-black text-slate-800 uppercase tracking-tight">Nouvelle Sortie</h2>
                 </div>
 
-                <form class="space-y-6">
+                <form class="space-y-6" @submit.prevent="createLeave">
                     <div class="space-y-2">
                         <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Date de
                             sortie</label>
@@ -164,11 +187,8 @@ onMounted(loadData)
                     </div>
 
                     <button type="submit"
-                        class="w-full bg-slate-900 hover:bg-indigo-600 text-white font-black uppercase tracking-[0.2em] py-4 rounded-2xl shadow-xl transition-all duration-300 flex items-center justify-center gap-3">
+                        class="w-full px-6 py-3 rounded-2xl bg-blue-600 text-white border border-blue-500 hover:bg-blue-700 font-black text-[10px] uppercase tracking-widest shadow-lg shadow-blue-100 transition-all duration-300">
                         Soumettre
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path d="M14 5l7 7m0 0l-7 7m7-7H3" stroke-width="2.5" />
-                        </svg>
                     </button>
                 </form>
             </div>

@@ -1,4 +1,4 @@
-import type { PERIOD_LEAVE_CHOICES, STATUS_CHOICES } from "@/enums/choices";
+import type { PERIOD_CHOICES, STATUS_CHOICES } from "@/enums/choices";
 
 export interface Leave {
     id?: number;
@@ -6,8 +6,8 @@ export interface Leave {
     date_request: string;
     leave_start: string;
     leave_end:string;
-    start_period: PERIOD_LEAVE_CHOICES;
-    end_period: PERIOD_LEAVE_CHOICES;
+    start_period: PERIOD_CHOICES;
+    end_period: PERIOD_CHOICES;
     duration: number;
     reason: string;
     validation_status: STATUS_CHOICES;

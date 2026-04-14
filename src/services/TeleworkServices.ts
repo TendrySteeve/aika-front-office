@@ -20,6 +20,10 @@ const TeleworkService = {
     },
     delete: async (id: number) => {
         await http.delete(`/telework/${id}/`);
+    },
+    getEmployeeTeleworks: async (matricule: string): Promise<Telework[]> => {
+        const response = await http.get(`/telework/?employee=${matricule}`);
+        return response.data;
     }
 }
 

@@ -1,4 +1,4 @@
-import { PERIOD_LEAVE_CHOICES } from "@/enums/choices";
+import { PERIOD_CHOICES } from "@/enums/choices";
 import type { AuthorizationRequest } from "@/types/Authorization";
 import type { Leave } from "@/types/Leave";
 
@@ -33,16 +33,16 @@ export const calculatedDayDuration = (leave: Partial<Leave>) => {
     const diffTime = Math.abs(end.getTime() - start.getTime());
     let days = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
 
-    if (leave.start_period !== PERIOD_LEAVE_CHOICES.FULL) {
+    if (leave.start_period !== PERIOD_CHOICES.FULL) {
         days -= 0.5;
     }
 
     if (leave.leave_start === leave.leave_end) {
-        if (leave.start_period !== PERIOD_LEAVE_CHOICES.FULL) {
+        if (leave.start_period !== PERIOD_CHOICES.FULL) {
             return 0.5;
         }
     } else {
-        if (leave.end_period !== PERIOD_LEAVE_CHOICES.FULL) {
+        if (leave.end_period !== PERIOD_CHOICES.FULL) {
             days -= 0.5;
         }
     }

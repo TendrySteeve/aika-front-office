@@ -1,5 +1,6 @@
 import type { Leave } from "@/types/Leave";
 import { http } from "./http";
+import { STATUS_CHOICES } from "@/enums/choices";
 
 const LeaveServices = {
     all: async (): Promise<Leave[]> => {
@@ -23,6 +24,22 @@ const LeaveServices = {
     },
     getEmployeeLeaves: async (matricule:string): Promise<Leave[]> => {
         const response = await http.get(`/leave/?employee=${matricule}`);
+        return response.data
+    },
+    acceptLeave: async (id: number): Promise<Leave> => {
+        const response = await http.patch(`/leave/${id}/`, {validation_status : STATUS_CHOICES.ACCEPTED});
+        return response.data;
+    },
+    rejectLeave: async (id: number): Promise<Leave> => {
+        const response = await http.patch(`/leave/${id}/`, {validation_status : STATUS_CHOICES.REJECTED});
+        return response.data;
+    },
+    cancelLeave: async (id: number): Promise<Leave> => {
+        const response = await http.patch(`/leave/${id}/`, {validation_status : STATUS_CHOICES.CANCELED});
+        return response.data;
+    },
+    getPendingLeaves: async (): Promise<Leave[]> => {
+        const response = await http.get(`/leave/?validation_status=PENDING`);
         return response.data
     }
 }
