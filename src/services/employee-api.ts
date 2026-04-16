@@ -1,4 +1,16 @@
-import type { Administrative, BankInfo, Contract, Coordinate, Degree, PersonalInfo, ProfessionalInfo, Skill, Training } from '@/types/Employee'
+import type {
+  Administrative,
+  BankInfo,
+  CompleteEmployee,
+  CompleteEmployeePayload,
+  Contract,
+  Coordinate,
+  Degree,
+  PersonalInfo,
+  ProfessionalInfo,
+  Skill,
+  Training,
+} from '@/types/Employee'
 import { http } from './http'
 
 export const emmployeeApi = {
@@ -7,6 +19,12 @@ export const emmployeeApi = {
   },
   fetchEmployeeData: async (matricule: string) => {
     return await http.get(`employee/index/${matricule}/`)
+  },
+  fetchCompleteEmployeeData: async (matricule: string) => {
+    return await http.get<CompleteEmployee>(`employee/index/${matricule}/complete/`)
+  },
+  updateCompleteEmployeeData: async (matricule: string, payload: CompleteEmployeePayload) => {
+    return await http.patch<CompleteEmployee>(`employee/index/${matricule}/complete/`, payload)
   },
 }
 

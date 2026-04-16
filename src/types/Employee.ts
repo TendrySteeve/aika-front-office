@@ -47,7 +47,7 @@ export interface Administrative {
 export interface ProfessionalInfo {
     id?: number;
     employee: string;
-    departement: string;
+    department: string;
     job_title: string;
     superior?: string;
 }
@@ -56,14 +56,15 @@ export interface Contract {
     id?: number;
     employee: string;
     contract_type: CONTRACT_TYPE_CHOICES;
-    start_date: string;
-    end_date?: string;
+    contract_start: string;
+    contract_end?: string | null;
     work_location: string;
 }
 
 export interface BankInfo {
     id?: number;
     employee: string;
+    payment_method?: string;
     bank_name: string;
     rib: string;
     account_number:string;
@@ -96,4 +97,30 @@ export interface Skill {
     description?: string;
 }
 
+export interface CompleteEmployee extends Employee {
+    personal_info?: PersonalInfo | null;
+    administrative_info?: Administrative | null;
+    bank_info?: BankInfo | null;
+    professional_info?: ProfessionalInfo | null;
+    coordinates?: Coordinate | null;
+    degrees?: Degree[];
+    skills?: Skill[];
+    trainings?: Training[];
+    contracts?: Contract[];
+}
+
+export interface CompleteEmployeePayload {
+    last_name?: string;
+    first_name?: string;
+    email?: string;
+    personal_info?: Omit<PersonalInfo, 'id' | 'employee'> | null;
+    administrative_info?: Omit<Administrative, 'id' | 'employee'> | null;
+    bank_info?: Omit<BankInfo, 'id' | 'employee'> | null;
+    professional_info?: Omit<ProfessionalInfo, 'id' | 'employee'> | null;
+    coordinates?: Omit<Coordinate, 'id' | 'employee'> | null;
+    degrees?: Array<Omit<Degree, 'id' | 'employee'>>;
+    skills?: Array<Omit<Skill, 'id' | 'employee'>>;
+    trainings?: Array<Omit<Training, 'id' | 'employee'>>;
+    contracts?: Array<Omit<Contract, 'id' | 'employee'>>;
+}
 

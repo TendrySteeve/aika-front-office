@@ -12,7 +12,7 @@ async function checkEmployee() {
         const response = await emmployeeApi.checkEmployeeExists(matricule.value);
         if (response.data.exists) {
             localStorage.setItem('matricule', matricule.value);
-            router.push({ name: 'employee' })
+            router.push({ name: 'information' })
         }
     } catch (error) {
     }

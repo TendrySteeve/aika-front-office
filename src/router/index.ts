@@ -14,6 +14,11 @@ const router = createRouter({
       children: [
         {
           path: '',
+          name: 'information',
+          component: () => import('@/views/Information.vue'),
+        },
+        {
+          path: 'employee-form',
           name: 'employee',
           component: () => import('@/views/Employee.vue'),
         },
