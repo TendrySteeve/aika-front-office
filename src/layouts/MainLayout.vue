@@ -52,6 +52,7 @@ const navigationItems = computed(() => [
 ])
 
 const exitApp = () => {
+    localStorage.removeItem('matricule');
     router.push({ name: 'home' })
 }
 
