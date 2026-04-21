@@ -14,7 +14,7 @@ async function checkEmployee() {
         let redirectPath = '';
         if (response.data.exists) {
             localStorage.setItem('matricule', matricule.value);
-            redirectPath = typeof route.query.redirect === 'string' ? route.query.redirect : '/'
+            redirectPath = typeof route.query.redirect === 'string' ? route.query.redirect : '/app'
         }
         router.push(redirectPath)
 
