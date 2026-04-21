@@ -11,13 +11,14 @@ async function checkEmployee() {
     try {
         if (matricule.value === '') return;
         const response = await emmployeeApi.checkEmployeeExists(matricule.value);
-        let redirectPath = '';
         if (response.data.exists) {
             localStorage.setItem('matricule', matricule.value);
-            redirectPath = typeof route.query.redirect === 'string' ? route.query.redirect : '/'
-        }
-        router.push(redirectPath)
+            const redirectPath = typeof route.query.redirect === 'string'
+                ? route.query.redirect
+                : '/app';
 
+            router.push(redirectPath);
+        }
     } catch (error) {
     }
 }
