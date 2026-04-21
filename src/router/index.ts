@@ -106,4 +106,20 @@ const router = createRouter({
   ],
 })
 
+router.beforeEach(async (to) => {
+  const matricule = localStorage.getItem('matricule')
+  const isAuthenticated = Boolean(matricule)
+  const isLoginRoute = to.path === '/'
+
+  if (!isAuthenticated && !isLoginRoute) {
+    return { name: 'login', query: { redirect: to.fullPath } }
+  }
+
+  if (isAuthenticated && isLoginRoute) {
+    return { name: 'information' }
+  }
+
+  return true
+})
+
 export default router

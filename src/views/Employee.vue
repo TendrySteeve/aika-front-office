@@ -168,8 +168,7 @@ const handleSubmit = async () => {
     hydrateForm(data)
     successMessage.value = 'Dossier mis a jour avec succes.'
   } catch (error) {
-    console.error(error)
-    errorMessage.value = "La sauvegarde du dossier a echoue."
+    errorMessage.value = "La sauvegarde du dossier a echoué."
   } finally {
     saving.value = false
   }
@@ -207,7 +206,7 @@ onMounted(loadEmployee)
       {{ successMessage }}
     </div>
 
-    <div v-if="loading" class="rounded-[2rem] border border-slate-200 bg-white px-8 py-10 text-slate-500 shadow-sm">
+    <div v-if="loading" class="rounded-4xl border border-slate-200 bg-white px-8 py-10 text-slate-500 shadow-sm">
       Chargement du dossier employe...
     </div>
 
