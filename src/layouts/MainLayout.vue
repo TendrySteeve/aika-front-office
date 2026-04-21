@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ArrowLeftEndOnRectangleIcon, CalendarDaysIcon, CheckBadgeIcon, DocumentTextIcon, IdentificationIcon } from '@heroicons/vue/16/solid';
+import { ArrowLeftEndOnRectangleIcon, BriefcaseIcon, CalendarDaysIcon, ChatBubbleBottomCenterIcon, ChatBubbleLeftEllipsisIcon, CheckBadgeIcon, DocumentTextIcon, HomeModernIcon, IdentificationIcon } from '@heroicons/vue/16/solid';
 import { computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
@@ -8,10 +8,10 @@ const router = useRouter();
 
 const navigationItems = computed(() => [
     {
-        label: 'Informations employe',
-        to: { name: 'employee' },
+        label: 'Informations employé',
+        to: { name: 'information' },
         icon: IdentificationIcon,
-        active: route.name === 'employee',
+        active: route.name === 'information' || route.name === 'employee',
     },
     {
         label: 'Demande',
@@ -25,12 +25,30 @@ const navigationItems = computed(() => [
         icon: CheckBadgeIcon,
         active: route.path.includes('/validation'),
     },
-    // {
-    //     label: 'Planning',
-    //     to: { name: 'planning' },
-    //     icon: CalendarDaysIcon,
-    //     active: route.name === 'planning',
-    // },
+    {
+        label: 'Réunion',
+        to: { name: 'meeting'},
+        icon: ChatBubbleLeftEllipsisIcon,
+        active: route.path.includes('/meeting'),
+    },
+    {
+        label: 'Télétravail',
+        to: { name: 'telework' },
+        icon: HomeModernIcon,
+        active: route.path.includes('/telework'),
+    },
+    {
+        label: 'Mission',
+        to: { name: 'mission' },
+        icon: BriefcaseIcon,
+        active: route.path.includes('/mission'),
+    },
+    {
+        label: 'Planning',
+        to: { name: 'planning' },
+        icon: CalendarDaysIcon,
+        active: route.name === 'planning',
+    },
 ])
 
 const exitApp = () => {

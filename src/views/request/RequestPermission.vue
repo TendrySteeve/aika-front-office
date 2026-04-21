@@ -1,3 +1,230 @@
-<script setup lang="ts"></script>
-<template></template>
+<script setup lang="ts">
+import { PERIOD_CHOICES, STATUS_CHOICES } from '@/enums/choices';
+import PermissionServices from '@/services/PermissionServices';
+import type { Permission } from '@/types/Pemission';
+import { calculatedDayDuration } from '@/utils/calculDuration';
+import { getStatusStyle } from '@/utils/styleUtils';
+import { ref } from 'vue';
+import { computed, onMounted } from 'vue';
+
+const permissions = ref<Permission[]>([]);
+const employee = ref<string>('');
+
+const permissionOnCreate = ref<Permission>({
+    employee: '',
+    date_request: String(new Date().toISOString().split('T')[0]),
+    permission_start: '',
+    permission_end: '',
+    start_period: PERIOD_CHOICES.FULL,
+    end_period: PERIOD_CHOICES.FULL,
+    duration: 0,
+    reason: '',
+    validation_status: STATUS_CHOICES.PENDING
+});
+
+const duration = computed(() => calculatedDayDuration(permissionOnCreate.value));
+
+async function fetchEmployeePermsissions() {
+    const matricule = localStorage.getItem('matricule');
+    if (!matricule) return 'Aucun employé conneté'
+    employee.value = matricule;
+    try {
+        const res = await PermissionServices.getEmployeePermissions(matricule);
+        permissions.value = res;
+    } catch (error) {
+
+    }
+}
+
+const createPermission = async () => {
+    permissionOnCreate.value = {
+        ...permissionOnCreate.value,
+        employee: employee.value,
+        duration: duration.value
+    }
+
+    try {
+        await PermissionServices.post(permissionOnCreate.value)
+        await fetchEmployeePermsissions()
+    } catch (error) {
+
+    }
+}
+
+const cancelEmployeePermission = async (id?: number) => { 
+    if (!id) return 'aucun identifiant du congé'
+    try {
+        await PermissionServices.cancelPermission(id);
+        await fetchEmployeePermsissions()
+    } catch (error) {
+        
+    }
+}
+
+onMounted(fetchEmployeePermsissions)
+</script>
+<template>
+    <div class="flex flex-col lg:flex-row gap-8 p-4 lg:p-8 bg-slate-50">
+
+        <div class="flex-1 space-y-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-2xl font-black text-slate-800 uppercase tracking-tight">Historique des Permissions</h2>
+                    <p class="text-sm text-slate-500 font-medium">Consultez l'état de vos permissions exceptionnelles</p>
+                </div>
+                <div class="bg-white px-4 py-2 rounded-2xl shadow-sm border border-slate-200">
+                    <span class="text-[10px] font-black text-slate-400 uppercase block">Total Demandes</span>
+                    <span class="text-xl font-black text-blue-600">{{ permissions.length }}</span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 gap-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+                <div v-for="permission in permissions" :key="permission.id"
+                    class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm hover:shadow-md transition-all group relative overflow-hidden">
+
+                    <div :class="getStatusStyle(permission.validation_status)" class="absolute top-0 left-0 w-1.5 h-full">
+                    </div>
+
+                    <div class="space-y-4">
+                        <div class="flex items-start justify-between gap-4">
+                            <div class="flex items-center gap-4">
+                                <div class="bg-slate-50 p-3 rounded-2xl border border-slate-100 group-hover:bg-blue-50 transition-colors">
+                                    <svg class="w-6 h-6 text-slate-400 group-hover:text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Date de demande</p>
+                                    <p class="text-sm font-bold text-slate-700">{{ permission.date_request }}</p>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center gap-3">
+                                <button v-if="permission.validation_status === STATUS_CHOICES.PENDING"
+                                    @click="cancelEmployeePermission(permission.id)"
+                                    class="flex items-center gap-2 px-3 py-2 rounded-xl text-red-500 hover:bg-red-50 transition-colors group/btn">
+                                    <svg class="w-4 h-4 transition-transform group-hover/btn:rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                    <span class="text-[10px] font-black uppercase tracking-tight">Annuler</span>
+                                </button>
+
+                                <div :class="getStatusStyle(permission.validation_status)"
+                                    class="px-4 py-1.5 rounded-full border text-[10px] font-black uppercase tracking-wider shadow-sm">
+                                    {{ permission.validation_status }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-50/50 rounded-2xl p-4 border border-slate-100">
+                            <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Motif de la permission</p>
+                            <p class="text-sm text-slate-600 font-medium leading-relaxed italic">
+                                « {{ permission.reason }} »
+                            </p>
+                        </div>
+
+                        <div class="flex items-center gap-6 pt-2">
+                            <div class="flex items-center gap-2">
+                                <div class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
+                                    <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" stroke-width="2.5" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <p class="text-[8px] font-black text-slate-400 uppercase">Durée</p>
+                                    <p class="text-xs font-black text-slate-700">{{ permission.duration }} Jours</p>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center gap-2">
+                                <div class="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
+                                    <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-width="2.5" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <p class="text-[8px] font-black text-slate-400 uppercase">Période</p>
+                                    <p class="text-xs font-bold text-slate-700">Du {{ permission.permission_start }} au {{ permission.permission_end }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="w-full lg:w-112.5">
+            <div class="bg-white rounded-[2.5rem] p-8 border border-slate-200 shadow-xl lg:sticky lg:top-8">
+                <div class="flex items-center gap-3 mb-8">
+                    <div class="w-10 h-10 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-indigo-200">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
+                        </svg>
+                    </div>
+                    <h2 class="text-xl font-black text-slate-800 uppercase tracking-tight">Nouvelle Permission</h2>
+                </div>
+
+                <form class="space-y-6" @submit.prevent="createPermission">
+                    <div class="grid grid-cols-1 gap-6">
+                        <div class="space-y-2">
+                            <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Début</label>
+                            <div class="flex gap-2">
+                                <input v-model="permissionOnCreate.permission_start" type="date"
+                                    class="flex-1 bg-slate-50 border-2 border-slate-100 rounded-2xl px-4 py-3 text-sm font-bold outline-none focus:border-indigo-500 focus:bg-white transition-all">
+                                <select v-model="permissionOnCreate.start_period"
+                                    class="w-24 bg-slate-50 border-2 border-slate-100 rounded-2xl px-2 py-3 text-[10px] font-black uppercase outline-none focus:border-indigo-500">
+                                    <option v-for="p in PERIOD_CHOICES" :key="p" :value="p">{{ p }}</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="space-y-2">
+                            <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Fin</label>
+                            <div class="flex gap-2">
+                                <input v-model="permissionOnCreate.permission_end" type="date"
+                                    class="flex-1 bg-slate-50 border-2 border-slate-100 rounded-2xl px-4 py-3 text-sm font-bold outline-none focus:border-indigo-500 focus:bg-white transition-all">
+                                <select v-model="permissionOnCreate.end_period"
+                                    class="w-24 bg-slate-50 border-2 border-slate-100 rounded-2xl px-2 py-3 text-[10px] font-black uppercase outline-none focus:border-indigo-500">
+                                    <option v-for="p in PERIOD_CHOICES" :key="p" :value="p">{{ p }}</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="rounded-2xl p-4 flex justify-between items-center border transition-all duration-300"
+                        :class="duration > 0
+                            ? 'bg-indigo-50 border-indigo-100 scale-100 shadow-sm'
+                            : 'bg-slate-50 border-slate-100 opacity-60 scale-95'">
+                        <div class="flex items-center gap-3">
+                            <div class="w-2 h-2 rounded-full" :class="duration > 0 ? 'bg-indigo-500 animate-pulse' : 'bg-slate-300'"></div>
+                            <span class="text-xs font-black uppercase italic" :class="duration > 0 ? 'text-indigo-700' : 'text-slate-400'">
+                                Temps accordé
+                            </span>
+                        </div>
+                        <div class="flex items-baseline gap-1">
+                            <span class="font-black text-2xl tracking-tighter transition-colors" :class="duration > 0 ? 'text-indigo-700' : 'text-slate-400'">
+                                {{ duration }}
+                            </span>
+                            <span class="text-[10px] font-black uppercase" :class="duration > 0 ? 'text-indigo-600/60' : 'text-slate-400'">
+                                {{ duration > 1 ? 'Jours' : 'Jour' }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Motif exceptionnel</label>
+                        <textarea v-model="permissionOnCreate.reason" rows="4"
+                            placeholder="Ex: Événement familial, rendez-vous médical urgent..."
+                            class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-5 py-4 text-sm font-medium outline-none focus:border-indigo-500 focus:bg-white transition-all resize-none"></textarea>
+                    </div>
+
+                    <button type="submit"
+                        class="w-full px-6 py-3 rounded-2xl bg-blue-600 text-white border border-blue-500 hover:bg-blue-700 font-black text-[10px] uppercase tracking-widest shadow-lg shadow-blue-100 transition-all duration-300">
+                        Soumettre
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</template>
 

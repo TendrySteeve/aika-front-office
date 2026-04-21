@@ -1,57 +1,66 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
-import { STATUS_CHOICES, PERIOD_LEAVE_CHOICES } from "@/enums/choices";
+import { computed, onMounted, ref } from 'vue';
+import { STATUS_CHOICES, PERIOD_CHOICES } from "@/enums/choices";
 import type { Leave } from '@/types/Leave';
+import { getStatusStyle } from '@/utils/styleUtils';
+import { calculatedDayDuration } from '@/utils/calculDuration';
+import LeaveServices from '@/services/LeaveServices';
 
-const leaves = ref<Leave[]>([
-    { id: 1, employee: 'Tendry', date_request: '2026-04-10', leave_start: '2026-05-01', leave_end: '2026-05-05', start_period: PERIOD_LEAVE_CHOICES.FULL, end_period: PERIOD_LEAVE_CHOICES.FULL, duration: 5, reason: 'Repos annuel', validation_status: STATUS_CHOICES.PENDING }
-]);
+const leaves = ref<Leave[]>([]);
+const employee = ref<string>('');
 
-const leaveOnCreate = ref<Partial<Leave>>({
-    start_period: PERIOD_LEAVE_CHOICES.FULL,
-    end_period: PERIOD_LEAVE_CHOICES.FULL,
+const leaveOnCreate = ref<Leave>({
+    employee: '',
+    date_request: String(new Date().toISOString().split('T')[0]),
+    leave_start: '',
+    leave_end: '',
+    start_period: PERIOD_CHOICES.FULL,
+    end_period: PERIOD_CHOICES.FULL,
+    duration: 0,
+    reason: '',
     validation_status: STATUS_CHOICES.PENDING
 });
 
-const getStatusStyle = (status: STATUS_CHOICES) => {
-    switch (status) {
-        case STATUS_CHOICES.PENDING: return 'bg-amber-100 text-amber-700 border-amber-200';
-        case STATUS_CHOICES.ACCEPTED: return 'bg-emerald-100 text-emerald-700 border-emerald-200';
-        case STATUS_CHOICES.REJECTED: return 'bg-red-100 text-red-700 border-red-200';
-        default: return 'bg-slate-100 text-slate-700 border-slate-200';
+const duration = computed(() => calculatedDayDuration(leaveOnCreate.value));
+
+async function fetchEmployeeLeaves() {
+    const matricule = localStorage.getItem('matricule');
+    if (!matricule) return 'Aucun employé conneté'
+    employee.value = matricule;
+    try {
+        const res = await LeaveServices.getEmployeeLeaves(matricule);
+        leaves.value = res;
+    } catch (error) {
+
     }
-};
+}
 
-const calculatedDuration = computed(() => {
-    if (!leaveOnCreate.value.leave_start || !leaveOnCreate.value.leave_end) return 0;
-
-    const start = new Date(leaveOnCreate.value.leave_start);
-    const end = new Date(leaveOnCreate.value.leave_end);
-
-    if (end < start) return 0;
-
-    const diffTime = Math.abs(end.getTime() - start.getTime());
-    let days = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-
-    if (leaveOnCreate.value.start_period !== PERIOD_LEAVE_CHOICES.FULL) {
-        days -= 0.5;
+const createLeave = async () => {
+    leaveOnCreate.value = {
+        ...leaveOnCreate.value,
+        employee: employee.value,
+        duration: duration.value
     }
 
-    if (leaveOnCreate.value.leave_start === leaveOnCreate.value.leave_end) {
-        if (leaveOnCreate.value.start_period !== PERIOD_LEAVE_CHOICES.FULL) {
-            return 0.5;
-        }
-    } else {
-        if (leaveOnCreate.value.end_period !== PERIOD_LEAVE_CHOICES.FULL) {
-            days -= 0.5;
-        }
+    try {
+        await LeaveServices.post(leaveOnCreate.value)
+        await fetchEmployeeLeaves()
+    } catch (error) {
+
     }
+}
 
-    return days > 0 ? days : 0;
-});
+const cancelEmployeeLeave = async (id?: number) => { 
+    if (!id) return 'aucun identifiant du congé'
+    try {
+        await LeaveServices.cancelLeave(id);
+        await fetchEmployeeLeaves()
+    } catch (error) {
+        
+    }
+}
 
-const handleCancel = async (id?: number) => { }
-
+onMounted(fetchEmployeeLeaves)
 </script>
 
 <template>
@@ -69,7 +78,7 @@ const handleCancel = async (id?: number) => { }
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 gap-4 ">
+            <div class="grid grid-cols-1 gap-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
                 <div v-for="leave in leaves" :key="leave.id"
                     class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm hover:shadow-md transition-all group relative overflow-hidden">
 
@@ -96,7 +105,7 @@ const handleCancel = async (id?: number) => { }
 
                             <div class="flex items-center gap-3">
                                 <button v-if="leave.validation_status === STATUS_CHOICES.PENDING"
-                                    @click="handleCancel(leave.id)"
+                                    @click="cancelEmployeeLeave(leave.id)"
                                     class="flex items-center gap-2 px-3 py-2 rounded-xl text-red-500 hover:bg-red-50 transition-colors group/btn">
                                     <svg class="w-4 h-4 transition-transform group-hover/btn:rotate-90" fill="none"
                                         stroke="currentColor" viewBox="0 0 24 24">
@@ -169,7 +178,7 @@ const handleCancel = async (id?: number) => { }
                     <h2 class="text-xl font-black text-slate-800 uppercase tracking-tight">Nouvelle Demande</h2>
                 </div>
 
-                <form class="space-y-6">
+                <form class="space-y-6" @submit.prevent="createLeave">
                     <div class="grid grid-cols-1 gap-6">
                         <div class="space-y-2">
                             <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Début du
@@ -179,7 +188,7 @@ const handleCancel = async (id?: number) => { }
                                     class="flex-1 bg-slate-50 border-2 border-slate-100 rounded-2xl px-4 py-3 text-sm font-bold outline-none focus:border-blue-500 focus:bg-white transition-all">
                                 <select v-model="leaveOnCreate.start_period"
                                     class="w-24 bg-slate-50 border-2 border-slate-100 rounded-2xl px-2 py-3 text-[10px] font-black uppercase outline-none focus:border-blue-500">
-                                    <option v-for="p in PERIOD_LEAVE_CHOICES" :key="p" :value="p">{{ p }}</option>
+                                    <option v-for="p in PERIOD_CHOICES" :key="p" :value="p">{{ p }}</option>
                                 </select>
                             </div>
                         </div>
@@ -192,33 +201,33 @@ const handleCancel = async (id?: number) => { }
                                     class="flex-1 bg-slate-50 border-2 border-slate-100 rounded-2xl px-4 py-3 text-sm font-bold outline-none focus:border-blue-500 focus:bg-white transition-all">
                                 <select v-model="leaveOnCreate.end_period"
                                     class="w-24 bg-slate-50 border-2 border-slate-100 rounded-2xl px-2 py-3 text-[10px] font-black uppercase outline-none focus:border-blue-500">
-                                    <option v-for="p in PERIOD_LEAVE_CHOICES" :key="p" :value="p">{{ p }}</option>
+                                    <option v-for="p in PERIOD_CHOICES" :key="p" :value="p">{{ p }}</option>
                                 </select>
                             </div>
                         </div>
                     </div>
 
                     <div class="rounded-2xl p-4 flex justify-between items-center border transition-all duration-300"
-                        :class="calculatedDuration > 0
+                        :class="duration > 0
                             ? 'bg-blue-50 border-blue-100 scale-100 shadow-sm'
                             : 'bg-slate-50 border-slate-100 opacity-60 scale-95'">
                         <div class="flex items-center gap-3">
                             <div class="w-2 h-2 rounded-full"
-                                :class="calculatedDuration > 0 ? 'bg-blue-500 animate-pulse' : 'bg-slate-300'"></div>
+                                :class="duration > 0 ? 'bg-blue-500 animate-pulse' : 'bg-slate-300'"></div>
                             <span class="text-xs font-black uppercase italic"
-                                :class="calculatedDuration > 0 ? 'text-blue-700' : 'text-slate-400'">
+                                :class="duration > 0 ? 'text-blue-700' : 'text-slate-400'">
                                 Durée Estimée
                             </span>
                         </div>
 
                         <div class="flex items-baseline gap-1">
                             <span class="font-black text-2xl tracking-tighter transition-colors"
-                                :class="calculatedDuration > 0 ? 'text-blue-700' : 'text-slate-400'">
-                                {{ calculatedDuration }}
+                                :class="duration > 0 ? 'text-blue-700' : 'text-slate-400'">
+                                {{ duration }}
                             </span>
                             <span class="text-[10px] font-black uppercase"
-                                :class="calculatedDuration > 0 ? 'text-blue-600/60' : 'text-slate-400'">
-                                {{ calculatedDuration > 1 ? 'Jours' : 'Jour' }}
+                                :class="duration > 0 ? 'text-blue-600/60' : 'text-slate-400'">
+                                {{ duration > 1 ? 'Jours' : 'Jour' }}
                             </span>
                         </div>
                     </div>
@@ -232,11 +241,8 @@ const handleCancel = async (id?: number) => { }
                     </div>
 
                     <button type="submit"
-                        class="w-full bg-slate-900 hover:bg-blue-600 text-white font-black uppercase tracking-[0.2em] py-4 rounded-2xl shadow-xl hover:shadow-blue-200 transition-all duration-300 flex items-center justify-center gap-3">
+                        class="w-full px-6 py-3 rounded-2xl bg-blue-600 text-white border border-blue-500 hover:bg-blue-700 font-black text-[10px] uppercase tracking-widest shadow-lg shadow-blue-100 transition-all duration-300">
                         Envoyer la demande
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path d="M14 5l7 7m0 0l-7 7m7-7H3" stroke-width="2.5" />
-                        </svg>
                     </button>
                 </form>
             </div>

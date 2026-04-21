@@ -1,29 +1,48 @@
 <script setup lang="ts">
-import { ref } from 'vue';
-import { STATUS_CHOICES } from "@/enums/choices";
+import { onMounted, ref } from 'vue';
 import type { AuthorizationRequest } from '@/types/Authorization';
+import AuthorizationService from '@/services/AuthorizationServices';
 
-const pendingAuths = ref<AuthorizationRequest[]>([
-    {
-        id: 'auth_101',
-        employee: 'Alice Martin',
-        date_request: '2026-04-11',
-        reason: 'Rendez-vous dentiste',
-        departure_time: '14:00',
-        return_time: '15:30',
-        duration: 1.5,
-        validation_status: "PENDING" as STATUS_CHOICES
+const pendingAuths = ref<AuthorizationRequest[]>([]);
+
+async function fetchPendingAuthorizations() {
+    try {
+        const res = await AuthorizationService.getPendingAuthorizations();
+        pendingAuths.value = res;
+    } catch (error) {
+
     }
-]);
+}
 
-const handleApprove = (id: string | undefined) => console.log("Approuvé:", id);
-const handleReject = (id: string | undefined) => console.log("Refusé:", id);
+const handleApprove = async (id?: number) => {
+    if (!id) return 'aucun identifiant pour le congé'
+    try {
+        await AuthorizationService.acceptAuhtorization(id);
+        await fetchPendingAuthorizations()
+    } catch (error) {
+
+    }
+};
+const handleReject = async (id?: number) => {
+    if (!id) return 'aucun identifiant pour le congé'
+    try {
+        await AuthorizationService.rejectAuhtorization(id);
+        await fetchPendingAuthorizations()
+    } catch (error) {
+
+    }
+};
+
+onMounted(fetchPendingAuthorizations);
 </script>
 
 <template>
     <div class="space-y-6">
         <div class="flex-1 overflow-y-auto max-h-[75vh] pr-2 custom-scrollbar">
             <div class="grid grid-cols-1 gap-4">
+                <div v-if="pendingAuths.length === 0" class="text-center py-10 text-slate-400 italic">
+                    Aucune demande d'autorisation en attente.
+                </div>
                 <div v-for="auth in pendingAuths" :key="auth.id"
                     class="bg-white rounded-4xl p-6 border border-slate-200 shadow-sm flex flex-col md:flex-row items-center gap-6">
 

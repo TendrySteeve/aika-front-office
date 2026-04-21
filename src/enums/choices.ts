@@ -31,7 +31,7 @@ export enum STATUS_CHOICES {
     CANCELED = 'CANCELED',
 }
 
-export enum PERIOD_LEAVE_CHOICES {
+export enum PERIOD_CHOICES {
     FULL = 'FULL',
     AM = 'AM',
     PM = 'PM',

@@ -1,18 +1,22 @@
 <script setup lang="ts">
 import { emmployeeApi } from '@/services/employee-api';
 import { ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 
 const matricule = ref('');
 const router = useRouter();
+const route = useRoute();
 
 async function checkEmployee() {
     try {
-        // if (matricule.value === '' || !matricule.value) return;
-        // const response = await emmployeeApi.checkEmployeeExists(matricule.value);
-        // if (response.data.exists) 
-        router.push({ name: 'employee' })
-
+        if (matricule.value === '') return;
+        const response = await emmployeeApi.checkEmployeeExists(matricule.value);
+        let redirectPath = '';
+        if (response.data.exists) {
+            localStorage.setItem('matricule', matricule.value);
+            redirectPath = typeof route.query.redirect === 'string' ? route.query.redirect : '/'
+        }
+        router.push(redirectPath)
 
     } catch (error) {
     }
@@ -77,7 +81,7 @@ async function checkEmployee() {
                                 </path>
                             </svg>
                         </span>
-                        <input type="text" placeholder="Ex: EM-123456" v-model="matricule"
+                        <input type="text" placeholder="Ex: EM-123456" v-model="matricule" required
                             class="w-full h-14 pl-12 pr-4 bg-white rounded-xl border-2 border-gray-200 focus:border-emerald-400 focus:ring-emerald-400 focus:ring-opacity-20 shadow-sm text-lg placeholder:text-gray-300 placeholder:italic transition-all duration-300" />
                     </div>
 

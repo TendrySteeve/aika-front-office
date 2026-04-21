@@ -1,59 +1,66 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { STATUS_CHOICES } from "@/enums/choices";
 import type { AuthorizationRequest } from '@/types/Authorization';
+import { calculatedHourDuration } from '@/utils/calculDuration';
+import AuthorizationService from '@/services/AuthorizationServices';
+import { getStatusStyle } from '@/utils/styleUtils';
 
-const authorizations = ref<AuthorizationRequest[]>([
-    {
-        id: '1',
-        employee: 'Tendry',
-        date_request: '2026-04-11',
-        reason: 'Rendez-vous médical',
-        validation_status: STATUS_CHOICES.PENDING,
-        departure_time: '14:00',
-        return_time: '16:00',
-        duration: 2
-    }
-]);
+const employee = ref('');
+const authorizations = ref<AuthorizationRequest[]>([]);
 
-const authOnCreate = ref<Partial<AuthorizationRequest>>({
-    date_request: new Date().toISOString().substr(0, 10),
+const authOnCreate = ref<AuthorizationRequest>({
+    employee: '',
+    date_request: String(new Date().toISOString().split('T')[0]),
+    reason: '',
+    validation_status: STATUS_CHOICES.PENDING,
     departure_time: '',
     return_time: '',
-    validation_status: STATUS_CHOICES.PENDING
+    duration: 0
 });
 
-// Calcul dynamique de la durée (en heures)
-const calculatedDuration = computed(() => {
-    if (!authOnCreate.value.departure_time || !authOnCreate.value.return_time) return 0;
+const duration = computed(() => calculatedHourDuration(authOnCreate.value));
 
-    const [startH, startM] = authOnCreate.value.departure_time.split(':').map(Number);
-    const [endH, endM] = authOnCreate.value.return_time.split(':').map(Number);
 
-    let startInMinutes = 0;
-    let endInMinutes = 0;
+async function fetchEmployeeAuthorizations() {
+    const matricule = localStorage.getItem('matricule');
+    if (!matricule) return 'Aucun employé conneté'
+    employee.value = matricule;
+    try {
+        const res = await AuthorizationService.getEmployeeAuthorizations(matricule);
+        authorizations.value = res;
+    } catch (error) {
+        
+    }
+}
 
-    if (startH && startM) startInMinutes = startH * 60 + startM;
-    if (endH && endM) endInMinutes = endH * 60 + endM;
+const createLeave = async () => {
+    authOnCreate.value = {
+        ...authOnCreate.value,
+        employee: employee.value,
+        duration: duration.value
+    }
 
-    if (endInMinutes <= startInMinutes) return 0;
+    try {
+        await AuthorizationService.post(authOnCreate.value)
+        await fetchEmployeeAuthorizations()
+    } catch (error) {
 
-    const diffInMinutes = endInMinutes - startInMinutes;
-    return parseFloat((diffInMinutes / 60).toFixed(2)); // Retourne par ex: 1.5 pour 1h30
-});
+    }
+}
 
-const getStatusStyle = (status: STATUS_CHOICES) => {
-    switch (status) {
-        case STATUS_CHOICES.PENDING: return 'bg-amber-100 text-amber-700 border-amber-200';
-        case STATUS_CHOICES.ACCEPTED: return 'bg-emerald-100 text-emerald-700 border-emerald-200';
-        case STATUS_CHOICES.REJECTED: return 'bg-red-100 text-red-700 border-red-200';
-        default: return 'bg-slate-100 text-slate-700 border-slate-200';
+const cancelEmployeeAuthorization = async (id?: number) => {
+     if (!id) return 'aucun identifiant de l\'autorisation'
+    try {
+        await AuthorizationService.cancelAuhtorization(id);
+        await fetchEmployeeAuthorizations()
+    } catch (error) {
+        
     }
 };
 
-const handleCancel = (id: string | undefined) => {
-    console.log("Annulation de la demande:", id);
-};
+
+onMounted(fetchEmployeeAuthorizations)
 </script>
 
 <template>
@@ -71,7 +78,7 @@ const handleCancel = (id: string | undefined) => {
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 gap-4 max-h-[70vh] overflow-y-auto pr-2 custom-scrollbar">
+            <div class="grid grid-cols-1 gap-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
                 <div v-for="auth in authorizations" :key="auth.id"
                     class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm hover:shadow-md transition-all group relative overflow-hidden">
 
@@ -95,7 +102,7 @@ const handleCancel = (id: string | undefined) => {
 
                             <div class="flex items-center gap-3">
                                 <button v-if="auth.validation_status === STATUS_CHOICES.PENDING"
-                                    @click="handleCancel(auth.id)"
+                                    @click="cancelEmployeeAuthorization(auth.id)"
                                     class="text-red-500 hover:bg-red-50 p-2 rounded-xl transition-colors group/btn">
                                     <svg class="w-5 h-5 transition-transform group-hover/btn:rotate-90" fill="none"
                                         stroke="currentColor" viewBox="0 0 24 24">
@@ -143,7 +150,7 @@ const handleCancel = (id: string | undefined) => {
                     <h2 class="text-xl font-black text-slate-800 uppercase tracking-tight">Nouvelle Sortie</h2>
                 </div>
 
-                <form class="space-y-6">
+                <form class="space-y-6" @submit.prevent="createLeave">
                     <div class="space-y-2">
                         <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Date de
                             sortie</label>
@@ -169,7 +176,7 @@ const handleCancel = (id: string | undefined) => {
                     <div
                         class="bg-indigo-50 rounded-2xl p-4 flex justify-between items-center border border-indigo-100">
                         <span class="text-indigo-700 text-xs font-black uppercase italic">Durée Totale</span>
-                        <span class="text-indigo-700 font-black text-lg">{{ calculatedDuration }} h</span>
+                        <span class="text-indigo-700 font-black text-lg">{{ duration }} h</span>
                     </div>
 
                     <div class="space-y-2">
@@ -180,11 +187,8 @@ const handleCancel = (id: string | undefined) => {
                     </div>
 
                     <button type="submit"
-                        class="w-full bg-slate-900 hover:bg-indigo-600 text-white font-black uppercase tracking-[0.2em] py-4 rounded-2xl shadow-xl transition-all duration-300 flex items-center justify-center gap-3">
+                        class="w-full px-6 py-3 rounded-2xl bg-blue-600 text-white border border-blue-500 hover:bg-blue-700 font-black text-[10px] uppercase tracking-widest shadow-lg shadow-blue-100 transition-all duration-300">
                         Soumettre
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path d="M14 5l7 7m0 0l-7 7m7-7H3" stroke-width="2.5" />
-                        </svg>
                     </button>
                 </form>
             </div>

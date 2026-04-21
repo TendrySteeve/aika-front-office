@@ -21,5 +21,9 @@ export default defineConfig({
     port: 3011,
     strictPort: true,
     host: true
+  },
+  build: {
+    outDir: 'dist',
+    sourcemap: false
   }
 })

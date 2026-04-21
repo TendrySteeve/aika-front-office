@@ -1,36 +1,55 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import type { Leave } from '@/types/Leave';
-import { STATUS_CHOICES, PERIOD_LEAVE_CHOICES } from "@/enums/choices";
+import { STATUS_CHOICES, PERIOD_CHOICES } from "@/enums/choices";
+import LeaveServices from '@/services/LeaveServices';
 
-const pendingLeaves = ref<Leave[]>([
-    {
-        id: 1,
-        employee: 'Tendry Rakoto',
-        date_request: '2026-04-10',
-        leave_start: '2026-05-01',
-        leave_end: '2026-05-05',
-        start_period: PERIOD_LEAVE_CHOICES.AM, // Exemple basé sur PERIOD_LEAVE_CHOICES
-        end_period: PERIOD_LEAVE_CHOICES.FULL,
-        duration: 4.5,
-        reason: 'Repos annuel et voyage familial',
-        validation_status: "PENDING" as STATUS_CHOICES
+const pendingLeaves = ref<Leave[]>([]);
+
+async function fetchPerndingLeaves() {
+    try {
+        const res = await LeaveServices.getPendingLeaves();
+        pendingLeaves.value = res;
+    } catch (error) {
+
     }
-]);
+}
 
-const handleApprove = (id: number | undefined) => console.log("Approuvé:", id);
-const handleReject = (id: number | undefined) => console.log("Refusé:", id);
+const handleApprove = async (id?: number) => {
+    if (!id) return 'aucun identifiant pour le congé'
+    try {
+        await LeaveServices.acceptLeave(id);
+        await fetchPerndingLeaves()
+    } catch (error) {
+
+    }
+};
+const handleReject = async (id?: number) => {
+    if (!id) return 'aucun identifiant pour le congé'
+    try {
+        await LeaveServices.rejectLeave(id);
+        await fetchPerndingLeaves()
+    } catch (error) {
+
+    }
+};
+
+onMounted(fetchPerndingLeaves);
 </script>
 
 <template>
     <div class="space-y-6">
         <div class="flex-1 overflow-y-auto max-h-[75vh] pr-2 custom-scrollbar">
             <div class="grid grid-cols-1 gap-4">
+                <div v-if="pendingLeaves.length === 0" class="text-center py-10 text-slate-400 italic">
+                    Aucune demande de congé en attente.
+                </div>
                 <div v-for="leave in pendingLeaves" :key="leave.id"
                     class="bg-white rounded-4xl p-6 border border-slate-200 shadow-sm flex flex-col md:flex-row items-center gap-6">
-                    
+
                     <div class="flex items-center gap-4 w-full md:w-64 shrink-0">
-                        <div class="w-12 h-12 rounded-2xl bg-blue-600 flex items-center justify-center text-white font-black">
+                        <div
+                            class="w-12 h-12 rounded-2xl bg-blue-600 flex items-center justify-center text-white font-black">
                             {{ leave.employee.substring(0, 2).toUpperCase() }}
                         </div>
                         <div>
@@ -42,8 +61,10 @@ const handleReject = (id: number | undefined) => console.log("Refusé:", id);
                     <div class="flex-1 grid grid-cols-2 gap-4 border-l border-slate-100 pl-6">
                         <div>
                             <p class="text-[9px] font-black text-slate-400 uppercase mb-1">Période</p>
-                            <p class="text-xs font-bold text-slate-700">Du {{ leave.leave_start }} au {{ leave.leave_end }}</p>
-                            <p class="text-[9px] text-blue-500 font-black uppercase italic">{{ leave.start_period }} / {{ leave.end_period }}</p>
+                            <p class="text-xs font-bold text-slate-700">Du {{ leave.leave_start }} au {{ leave.leave_end
+                                }}</p>
+                            <p class="text-[9px] text-blue-500 font-black uppercase italic">{{ leave.start_period }} /
+                                {{ leave.end_period }}</p>
                         </div>
                         <div>
                             <p class="text-[9px] font-black text-slate-400 uppercase mb-1">Durée</p>
