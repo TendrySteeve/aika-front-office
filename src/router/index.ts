@@ -112,7 +112,7 @@ router.beforeEach(async (to) => {
   const isLoginRoute = to.path === '/'
 
   if (!isAuthenticated && !isLoginRoute) {
-    return { name: 'login', query: { redirect: to.fullPath } }
+    return { name: 'home', query: { redirect: to.fullPath } }
   }
 
   if (isAuthenticated && isLoginRoute) {
