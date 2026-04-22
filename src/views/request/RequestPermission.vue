@@ -15,14 +15,19 @@ const permissionOnCreate = ref<Permission>({
     date_request: String(new Date().toISOString().split('T')[0]),
     permission_start: '',
     permission_end: '',
-    start_period: PERIOD_CHOICES.FULL,
-    end_period: PERIOD_CHOICES.FULL,
+    start_period: PERIOD_CHOICES.AM,
+    end_period: PERIOD_CHOICES.PM,
     duration: 0,
     reason: '',
     validation_status: STATUS_CHOICES.PENDING
 });
 
-const duration = computed(() => calculatedDayDuration(permissionOnCreate.value));
+const duration = computed(() => calculatedDayDuration({
+  start: permissionOnCreate.value.permission_start,
+  end: permissionOnCreate.value.permission_end,
+  period_start: permissionOnCreate.value.start_period,
+  period_end: permissionOnCreate.value.end_period,
+}));
 
 async function fetchEmployeePermsissions() {
     const matricule = localStorage.getItem('matricule');

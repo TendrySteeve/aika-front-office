@@ -37,18 +37,18 @@ const navigationItems = computed(() => [
         icon: HomeModernIcon,
         active: route.path.includes('/telework'),
     },
-    {
-        label: 'Mission',
-        to: { name: 'mission' },
-        icon: BriefcaseIcon,
-        active: route.path.includes('/mission'),
-    },
-    {
-        label: 'Planning',
-        to: { name: 'planning' },
-        icon: CalendarDaysIcon,
-        active: route.name === 'planning',
-    },
+    // {
+    //     label: 'Mission',
+    //     to: { name: 'mission' },
+    //     icon: BriefcaseIcon,
+    //     active: route.path.includes('/mission'),
+    // },
+    // {
+    //     label: 'Planning',
+    //     to: { name: 'planning' },
+    //     icon: CalendarDaysIcon,
+    //     active: route.name === 'planning',
+    // },
 ])
 
 const exitApp = () => {

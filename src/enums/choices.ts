@@ -32,7 +32,6 @@ export enum STATUS_CHOICES {
 }
 
 export enum PERIOD_CHOICES {
-    FULL = 'FULL',
     AM = 'AM',
     PM = 'PM',
 }

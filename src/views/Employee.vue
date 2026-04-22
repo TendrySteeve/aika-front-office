@@ -259,7 +259,7 @@ onMounted(loadEmployee)
             </div>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-4 gap-6 pt-8 border-t border-slate-50">
+          <div class="grid grid-cols-1 md:grid-cols-5 gap-6 pt-8 border-t border-slate-50">
             <div class="flex flex-col gap-2">
               <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Date de Naissance</label>
               <input
@@ -275,6 +275,16 @@ onMounted(loadEmployee)
                 type="text"
                 class="w-full px-5 py-3.5 rounded-xl border-2 border-slate-100 bg-slate-50/30 text-sm outline-none focus:border-blue-500 focus:bg-white transition-all"
                 placeholder="Ville"
+              >
+            </div>
+
+            <div class="flex flex-col gap-2">
+              <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nationalité</label>
+              <input
+                v-model="personalInfo.nationality"
+                type="text"
+                class="w-full px-5 py-3.5 rounded-xl border-2 border-slate-100 bg-slate-50/30 text-slate-700 text-sm focus:border-blue-500 focus:bg-white transition-all outline-none"
+                placeholder="ex: Malgache"
               >
             </div>
             <div class="flex flex-col gap-2">
@@ -540,7 +550,7 @@ onMounted(loadEmployee)
               v-model="bankInfo.bank_name"
               type="text"
               class="w-full px-5 py-3.5 rounded-xl border-2 border-slate-100 bg-slate-50/30 text-sm outline-none focus:border-cyan-500 focus:bg-white transition-all"
-              placeholder="BFV"
+              placeholder=""
             >
           </div>
           <div class="flex flex-col gap-2">
@@ -549,7 +559,7 @@ onMounted(loadEmployee)
               v-model="bankInfo.account_number"
               type="text"
               class="w-full px-5 py-3.5 rounded-xl border-2 border-slate-100 bg-slate-50/30 text-sm outline-none focus:border-cyan-500 focus:bg-white transition-all"
-              placeholder="ACC10001"
+              placeholder=""
             >
           </div>
           <div class="flex flex-col gap-2 lg:col-span-2">
@@ -558,7 +568,7 @@ onMounted(loadEmployee)
               v-model="bankInfo.rib"
               type="text"
               class="w-full px-5 py-3.5 rounded-xl border-2 border-slate-100 bg-slate-50/30 text-sm outline-none focus:border-cyan-500 focus:bg-white transition-all"
-              placeholder="000010002000300040005000"
+              placeholder=""
             >
           </div>
           <div class="grid grid-cols-2 gap-6 lg:col-span-1">
