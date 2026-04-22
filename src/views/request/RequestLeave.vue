@@ -14,14 +14,19 @@ const leaveOnCreate = ref<Leave>({
     date_request: String(new Date().toISOString().split('T')[0]),
     leave_start: '',
     leave_end: '',
-    start_period: PERIOD_CHOICES.FULL,
-    end_period: PERIOD_CHOICES.FULL,
+    start_period: PERIOD_CHOICES.AM,
+    end_period: PERIOD_CHOICES.PM,
     duration: 0,
     reason: '',
     validation_status: STATUS_CHOICES.PENDING
 });
 
-const duration = computed(() => calculatedDayDuration(leaveOnCreate.value));
+const duration = computed(() => calculatedDayDuration({
+  start: leaveOnCreate.value.leave_start,
+  end: leaveOnCreate.value.leave_end,
+  period_start: leaveOnCreate.value.start_period,
+  period_end: leaveOnCreate.value.end_period,
+}));
 
 async function fetchEmployeeLeaves() {
     const matricule = localStorage.getItem('matricule');
@@ -233,11 +238,10 @@ onMounted(fetchEmployeeLeaves)
                     </div>
 
                     <div class="space-y-2">
-                        <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Motif de
-                            l'absence</label>
+                        <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Motif du congé</label>
                         <textarea v-model="leaveOnCreate.reason" rows="4"
                             placeholder="Expliquez brièvement la raison..."
-                            class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-5 py-4 text-sm font-medium outline-none focus:border-blue-500 focus:bg-white transition-all resize-none"></textarea>
+                            class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-5 py-4 text-sm font-medium outline-0 focus:border-blue-500 focus:bg-white"></textarea>
                     </div>
 
                     <button type="submit"

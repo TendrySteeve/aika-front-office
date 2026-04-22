@@ -2,7 +2,6 @@ import { PERIOD_CHOICES } from "@/enums/choices";
 import type { AuthorizationRequest } from "@/types/Authorization";
 import type { Leave } from "@/types/Leave";
 
-// Calcul dynamique de la durée (en heures)
 export const calculatedHourDuration = (authorization: Partial<AuthorizationRequest>) => {
     if (!authorization.departure_time || !authorization.return_time) return 0;
 
@@ -22,30 +21,28 @@ export const calculatedHourDuration = (authorization: Partial<AuthorizationReque
 };
 
 
-export const calculatedDayDuration = (leave: Partial<Leave>) => {
-    if (!leave.leave_start || !leave.leave_end) return 0;
+export const calculatedDayDuration = (params: {
+  start: string
+  end: string
+  period_start?: PERIOD_CHOICES
+  period_end?: PERIOD_CHOICES
+}) => {
+  if (!params.start || !params.end) return 0
 
-    const start = new Date(leave.leave_start);
-    const end = new Date(leave.leave_end);
+  const start = new Date(params.start)
+  const end = new Date(params.end)
 
-    if (end < start) return 0;
+  if (end < start) return 0
 
-    const diffTime = Math.abs(end.getTime() - start.getTime());
-    let days = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+  const diffTime = Math.abs(end.getTime() - start.getTime())
+  let days = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1
 
-    if (leave.start_period !== PERIOD_CHOICES.FULL) {
-        days -= 0.5;
-    }
+  if (params.period_start === PERIOD_CHOICES.PM) {
+    days -= 0.5
+  }
+  if (params.period_end === PERIOD_CHOICES.AM) {
+    days -= 0.5
+  }
 
-    if (leave.leave_start === leave.leave_end) {
-        if (leave.start_period !== PERIOD_CHOICES.FULL) {
-            return 0.5;
-        }
-    } else {
-        if (leave.end_period !== PERIOD_CHOICES.FULL) {
-            days -= 0.5;
-        }
-    }
-
-    return days > 0 ? days : 0;
-};
+  return days > 0 ? days : 0
+}
