@@ -9,9 +9,9 @@ const router = useRouter();
 const navigationItems = computed(() => [
     {
         label: 'Informations employé',
-        to: { name: 'information' },
+        to: { name: 'employee' },
         icon: IdentificationIcon,
-        active: route.name === 'information' || route.name === 'employee',
+        active: route.name === 'employee',
     },
     {
         label: 'Demande',

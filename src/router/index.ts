@@ -12,13 +12,13 @@ const router = createRouter({
       path: '/app',
       component: () => import('@/layouts/MainLayout.vue'),
       children: [
+        // {
+        //   path: '',
+        //   name: 'information',
+        //   component: () => import('@/views/Information.vue'),
+        // },
         {
           path: '',
-          name: 'information',
-          component: () => import('@/views/Information.vue'),
-        },
-        {
-          path: 'employee-form',
           name: 'employee',
           component: () => import('@/views/Employee.vue'),
         },
@@ -116,7 +116,7 @@ router.beforeEach(async (to) => {
   }
 
   if (isAuthenticated && isLoginRoute) {
-    return { name: 'information' }
+    return { name: 'employee' }
   }
 
   return true
