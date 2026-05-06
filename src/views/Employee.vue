@@ -84,7 +84,7 @@ const fetchEmployee = async () => {
         removedEducationIds.value = []
         removedSkillIds.value = []
     } catch (error) {
-        router.push({ name: 'employee' })
+        router.push({ name: 'information' })
     } finally {
         loadingFetch.value = false
     }
@@ -94,6 +94,29 @@ const updateEmployee = async () => {
     loading.value = true
 
     try {
+        await Promise.all([
+            ...removedContractIds.value.map((id) =>{
+                console.log(id)
+                EmployeeService.contract.delete(form.employee.matricule, id)
+            }
+            ),
+            ...removedDegreeIds.value.map((id) =>{
+                console.log(id)
+
+                EmployeeService.degree.delete(form.employee.matricule, id)}
+            ),
+
+            ...removedEducationIds.value.map((id) =>{
+                console.log(id)
+
+                EmployeeService.education.delete(form.employee.matricule, id)}
+            ),
+            ...removedSkillIds.value.map((id) =>{
+                console.log(id)
+
+                EmployeeService.skill.delete(form.employee.matricule, id)}
+            ),
+        ])
         await createOrUpdateEmployee(
             form.employee,
             form.professional,
@@ -105,21 +128,7 @@ const updateEmployee = async () => {
             form.educations,
             form.skills,
         )
-        await Promise.all([
-            ...removedContractIds.value.map((id) =>
-                EmployeeService.contract.delete(form.employee.matricule, id),
-            ),
-            ...removedDegreeIds.value.map((id) =>
-                EmployeeService.degree.delete(form.employee.matricule, id),
-            ),
-            ...removedEducationIds.value.map((id) =>
-                EmployeeService.education.delete(form.employee.matricule, id),
-            ),
-            ...removedSkillIds.value.map((id) =>
-                EmployeeService.skill.delete(form.employee.matricule, id),
-            ),
-        ])
-        router.push({ name: 'employee' })
+        router.push({ name: 'information' })
     } catch (error: any) {
         if (error.response) console.log(error.message)
     } finally {
@@ -131,7 +140,7 @@ onMounted(fetchEmployee)
 </script>
 <template>
     <LoadingContent v-if="loadingFetch" />
-    <FormPage :back-to="{ name: 'employee' }" title="Modifier le Profil" subtitle="Mise à jour des informations employé"
+    <FormPage :back-to="{ name: 'information' }" title="Modifier le Profil" subtitle="Mise à jour des informations employé"
         maxWidthClass="max-w-6xl">
         <form @submit.prevent="updateEmployee" class="space-y-8 relative z-10">
             <GeneralInfoForm v-model="form.employee" />
