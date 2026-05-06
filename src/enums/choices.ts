@@ -1,4 +1,4 @@
-export enum GENDER_CHOICES {
+export enum SEX_CHOICES {
     male = 'male',
     female = 'female',
 }
@@ -17,12 +17,6 @@ export enum CONTRACT_TYPE_CHOICES {
     consultant = 'consultant',
 }
 
-export enum LEVEL_SKILL_CHOICES {
-    beginner = 'beginner',
-    intermediate = 'intermediate',
-    advanced = 'advanced',
-    expert = 'expert',
-}
 
 export enum STATUS_CHOICES {
     PENDING = 'PENDING',
@@ -34,4 +28,11 @@ export enum STATUS_CHOICES {
 export enum PERIOD_CHOICES {
     AM = 'AM',
     PM = 'PM',
+}
+
+export enum LEVEL_CHOICES {
+    beginner = 'beginner',
+    intermediate = 'intermediate',
+    advanced = 'advanced',
+    expert = 'expert',
 }

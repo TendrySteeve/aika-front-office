@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { emmployeeApi } from '@/services/employee-api';
 import { ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
@@ -10,12 +9,9 @@ const route = useRoute();
 async function checkEmployee() {
     try {
         if (matricule.value === '') return;
-        const response = await emmployeeApi.checkEmployeeExists(matricule.value);
         let redirectPath = '';
-        if (response.data.exists) {
-            localStorage.setItem('matricule', matricule.value);
-            redirectPath = typeof route.query.redirect === 'string' ? route.query.redirect : '/'
-        }
+        localStorage.setItem('matricule', matricule.value);
+        redirectPath = typeof route.query.redirect === 'string' ? route.query.redirect : '/'
         router.push(redirectPath)
 
     } catch (error) {

@@ -19,7 +19,7 @@ const authOnCreate = ref<AuthorizationRequest>({
     duration: 0
 });
 
-const duration = computed(() => calculatedHourDuration(authOnCreate.value));
+const duration = computed(() => calculatedHourDuration(authOnCreate.value.departure_time, authOnCreate.value.return_time));
 
 
 async function fetchEmployeeAuthorizations() {
