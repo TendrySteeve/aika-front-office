@@ -29,6 +29,19 @@ const removedDegreeIds = ref<number[]>([])
 const removedEducationIds = ref<number[]>([])
 const removedSkillIds = ref<number[]>([])
 
+const removeFormItem = <T extends { id?: number }>(
+    list: T[],
+    index: number,
+    removedIds: number[],
+) => {
+    const item = list[index]
+
+    if (!item || list.length === 1) return
+    if (item.id !== undefined) removedIds.push(item.id)
+
+    removeItem(list, index)
+}
+
 const fetchEmployee = async () => {
     loadingFetch.value = true
 
@@ -91,29 +104,19 @@ const fetchEmployee = async () => {
 
 const updateEmployee = async () => {
     loading.value = true
-    console.log(removedContractIds.value, removedDegreeIds.value, removedSkillIds.value, removedEducationIds.value)
     try {
         await Promise.all([
-            ...removedContractIds.value.map((id) =>{
-                console.log(id)
-                EmployeeService.contract.delete(form.employee.matricule, id)
-            }
+            ...removedContractIds.value.map((id) =>
+                EmployeeService.contract.delete(form.employee.matricule, id),
             ),
-            ...removedDegreeIds.value.map((id) =>{
-                console.log(id)
-
-                EmployeeService.degree.delete(form.employee.matricule, id)}
+            ...removedDegreeIds.value.map((id) =>
+                EmployeeService.degree.delete(form.employee.matricule, id),
             ),
-
-            ...removedEducationIds.value.map((id) =>{
-                console.log(id)
-
-                EmployeeService.education.delete(form.employee.matricule, id)}
+            ...removedEducationIds.value.map((id) =>
+                EmployeeService.education.delete(form.employee.matricule, id),
             ),
-            ...removedSkillIds.value.map((id) =>{
-                console.log(id)
-
-                EmployeeService.skill.delete(form.employee.matricule, id)}
+            ...removedSkillIds.value.map((id) =>
+                EmployeeService.skill.delete(form.employee.matricule, id),
             ),
         ])
         await createOrUpdateEmployee(
@@ -151,7 +154,7 @@ onMounted(fetchEmployee)
             <ProfessionalInfoForm v-model="form.professional" />
 
             <ContractsForm v-model="form.contracts" @add-contract="addItem(form.contracts, factories.createContract)"
-                @remove-contract="removeItem(form.contracts, $event)" />
+                @remove-contract="removeFormItem(form.contracts, $event, removedContractIds)" />
 
             <BankInfoForm v-model="form.bank" />
 
@@ -159,13 +162,13 @@ onMounted(fetchEmployee)
 
             <EducationForm v-model="form.educations"
                 @add-education="addItem(form.educations, factories.createEducation)"
-                @remove-education="removeItem(form.educations, $event)" />
+                @remove-education="removeFormItem(form.educations, $event, removedEducationIds)" />
 
             <DegreesForm v-model="form.degrees" @add-degree="addItem(form.degrees, factories.createDegree)"
-                @remove-degree="removeItem(form.degrees, $event)" />
+                @remove-degree="removeFormItem(form.degrees, $event, removedDegreeIds)" />
 
             <SkillsForm v-model="form.skills" @add-skill="addItem(form.skills, factories.createSkill)"
-                @remove-skill="removeItem(form.skills, $event)" />
+                @remove-skill="removeFormItem(form.skills, $event, removedSkillIds)" />
 
             <div class="pt-8">
                 <button type="submit"
