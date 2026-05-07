@@ -11,27 +11,27 @@ const forms = defineModel<Skill[]>({ required: true })
 
 const emit = defineEmits<{
     'add-skill': []
-    'remove-skill': [index: number]
+    'remove-skill': [id: number]
 }>()
 
 const addSkill = () => {
     emit('add-skill')
 }
 
-const removeSkill = (index: number) => {
-    emit('remove-skill', index)
+const removeSkill = (id: number) => {
+    emit('remove-skill', id)
 }
 </script>
 
 <template>
     <FormSection title="Compétences" show-button button-text="Ajouter une compétence" @add-item="addSkill">
-        <div v-for="(skill, index) in forms" :key="`skill-${index}`"
+        <div v-for="(skill) in forms" :key="`skill-${skill.id}`"
             class="space-y-6 rounded-4xl border border-slate-100 bg-slate-50/60 p-6">
             <div class="flex items-center justify-between gap-4">
                 <p class="text-xs font-black uppercase tracking-widest text-slate-500">
-                    Compétence {{ index + 1 }}
+                    Compétence {{ skill.id as number + 1 }}
                 </p>
-                <button type="button" @click="removeSkill(index)" :disabled="forms.length === 1"
+                <button type="button" @click="removeSkill(skill.id as number)" :disabled="forms.length === 1"
                     class="rounded-2xl bg-white px-4 py-2 text-[10px] font-black uppercase tracking-widest text-red-500 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50">
                     Supprimer
                 </button>

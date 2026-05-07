@@ -91,7 +91,7 @@ const fetchEmployee = async () => {
 
 const updateEmployee = async () => {
     loading.value = true
-
+    console.log(removedContractIds.value, removedDegreeIds.value, removedSkillIds.value, removedEducationIds.value)
     try {
         await Promise.all([
             ...removedContractIds.value.map((id) =>{

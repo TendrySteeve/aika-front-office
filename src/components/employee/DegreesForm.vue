@@ -7,27 +7,27 @@ const forms = defineModel<Degree[]>({ required: true })
 
 const emit = defineEmits<{
     'add-degree': []
-    'remove-degree': [index: number]
+    'remove-degree': [id: number]
 }>()
 
 const addDegree = () => {
     emit('add-degree')
 }
 
-const removeDegree = (index: number) => {
-    emit('remove-degree', index)
+const removeDegree = (id: number) => {
+    emit('remove-degree', id)
 }
 </script>
 
 <template>
     <FormSection title="Diplômes obtenues" show-button button-text="Ajouter un diplôme" @add-item="addDegree">
-        <div v-for="(degree, index) in forms" :key="`degree-${index}`"
+        <div v-for="(degree) in forms" :key="`degree-${degree.id}`"
             class="space-y-6 rounded-4xl border border-slate-100 bg-slate-50/60 p-6">
             <div class="flex items-center justify-between gap-4">
                 <p class="text-xs font-black uppercase tracking-widest text-slate-500">
-                    Diplôme {{ index + 1 }}
+                    Diplôme {{ degree.id as number + 1 }}
                 </p>
-                <button type="button" @click="removeDegree(index)" :disabled="forms.length === 1"
+                <button type="button" @click="removeDegree(degree.id as number)" :disabled="forms.length === 1"
                     class="rounded-2xl bg-white px-4 py-2 text-[10px] font-black uppercase tracking-widest text-red-500 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50">
                     Supprimer
                 </button>
