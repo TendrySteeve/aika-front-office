@@ -24,7 +24,6 @@ const fetchEmployee = async () => {
         const matricule = localStorage.getItem("matricule") as string;
         employee.value = await EmployeeService.get(matricule)
     } catch (error) {
-        console.error(error)
         router.push({ name: 'employee' })
     } finally {
         loading.value = false
@@ -59,7 +58,7 @@ onMounted(fetchEmployee)
                 <!-- Cercle décoratif -->
                 <div class="absolute -top-8 -right-8 w-44 h-44 rounded-full bg-white/4 pointer-events-none"></div>
 
-                <p class="text-[10px] tracking-[3px] uppercase text-amber-200/80 mb-2">
+                <p class="text-[10px] tracking-[3px] uppercase text-white mb-2">
                     Dossier Ressources Humaines
                 </p>
                 <h1 class="font-serif text-3xl font-bold leading-tight mb-1">

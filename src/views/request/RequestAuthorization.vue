@@ -40,12 +40,12 @@ const createLeave = async () => {
         employee: employee.value,
         duration: duration.value
     }
-
+    console.log(authOnCreate.value)
     try {
         await AuthorizationService.post(authOnCreate.value)
         await fetchEmployeeAuthorizations()
-    } catch (error) {
-
+    } catch (error: any) {
+        console.log(error.response)
     }
 }
 

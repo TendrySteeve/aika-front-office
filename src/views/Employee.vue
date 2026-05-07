@@ -84,7 +84,6 @@ const fetchEmployee = async () => {
         removedEducationIds.value = []
         removedSkillIds.value = []
     } catch (error) {
-        router.push({ name: 'information' })
     } finally {
         loadingFetch.value = false
     }

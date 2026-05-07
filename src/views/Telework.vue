@@ -2,10 +2,11 @@
 import { onMounted, ref } from 'vue';
 import type { Telework } from '@/types/Telework';
 import TeleworkService from '@/services/TeleworkServices';
+import LoadingContent from '@/components/LoadingContent.vue';
 
 const teleworks = ref<Telework[]>([]);
 const employee = ref<string>('');
-
+const loading = ref(false);
 const teleworkOnCreate = ref<Telework>({
     employee: '',
     telework_date: String(new Date().toISOString().split('T')[0]),
@@ -13,6 +14,7 @@ const teleworkOnCreate = ref<Telework>({
 });
 
 async function fetchEmployeeTeleworks() {
+    loading.value = true;
     const matricule = localStorage.getItem('matricule');
     if (!matricule) return 'Aucun employé connecté';
     employee.value = matricule;
@@ -21,6 +23,8 @@ async function fetchEmployeeTeleworks() {
         teleworks.value = res;
     } catch (error) {
         console.error(error);
+    } finally {
+        loading.value = false;
     }
 }
 
@@ -58,6 +62,8 @@ onMounted(fetchEmployeeTeleworks);
 </script>
 
 <template>
+    <LoadingContent v-if="loading" />
+
     <div class="flex flex-col lg:flex-row gap-8 p-4 lg:p-8 bg-slate-50">
         <div class="flex-1 space-y-6">
             <div class="flex items-center justify-between">

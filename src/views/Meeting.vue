@@ -2,10 +2,11 @@
 import { onMounted, ref } from 'vue';
 import type { Meeting } from '@/types/Meeting';
 import MeetingService from '@/services/MeetingServices';
+import LoadingContent from '@/components/LoadingContent.vue';
 
 const meetings = ref<Meeting[]>([]);
 const employee = ref<string>('');
-
+const loading = ref(false);
 const meetingOnCreate = ref<Meeting>({
     employee: '',
     meeting_date: String(new Date().toISOString().split('T')[0]),
@@ -14,6 +15,7 @@ const meetingOnCreate = ref<Meeting>({
 });
 
 async function fetchEmployeeMeetings() {
+    loading.value = true;
     const matricule = localStorage.getItem('matricule');
     if (!matricule) return 'Aucun employé connecté';
     employee.value = matricule;
@@ -22,6 +24,9 @@ async function fetchEmployeeMeetings() {
         meetings.value = res;
     } catch (error) {
         console.error(error);
+        
+    } finally {
+        loading.value = false;
     }
 }
 
@@ -60,6 +65,8 @@ onMounted(fetchEmployeeMeetings);
 </script>
 
 <template>
+    <LoadingContent v-if="loading" />
+
     <div class="flex flex-col lg:flex-row gap-8 p-4 lg:p-8 bg-slate-50">
         <!-- Historique des Réunions -->
         <div class="flex-1 space-y-6">

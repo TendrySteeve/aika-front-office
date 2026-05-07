@@ -6,7 +6,7 @@ import { onMounted, ref } from 'vue';
 
 const pendingPermissions = ref<Permission[]>([]);
 
-async function fetchPerndingLeaves() {
+async function fetchPendingPermissions() {
     try {
         const res = await PermissionServices.getPendingPermissions();
         pendingPermissions.value = res;
@@ -19,7 +19,7 @@ const handleApprove = async (id?: number) => {
     if (!id) return 'aucun identifiant pour le congé'
     try {
         await PermissionServices.acceptPermission(id);
-        await fetchPerndingLeaves()
+        await fetchPendingPermissions()
     } catch (error) {
 
     }
@@ -28,13 +28,13 @@ const handleReject = async (id?: number) => {
     if (!id) return 'aucun identifiant pour le congé'
     try {
         await PermissionServices.rejectPermission(id);
-        await fetchPerndingLeaves()
+        await fetchPendingPermissions()
     } catch (error) {
 
     }
 };
 
-onMounted(fetchPerndingLeaves);
+onMounted(fetchPendingPermissions);
 </script>
 <template>
     <div class="space-y-6">

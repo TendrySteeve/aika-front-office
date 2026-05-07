@@ -1,8 +1,8 @@
 export interface Mission {
   id?: number
   employee: string
-  mission_start: number
-  mission_end: number
+  mission_start: string
+  mission_end: string
   duration: number
   project: string
   activity?: string
