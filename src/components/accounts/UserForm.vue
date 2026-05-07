@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import type { User } from '@/types/User'
+import type { User } from '@/types/User';
+
+
 
 const form = defineModel<User>({ required: true })
 

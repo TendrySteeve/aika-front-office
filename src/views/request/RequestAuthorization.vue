@@ -5,10 +5,11 @@ import type { AuthorizationRequest } from '@/types/Authorization';
 import { calculatedHourDuration } from '@/utils/calculDuration';
 import AuthorizationService from '@/services/AuthorizationServices';
 import { getStatusStyle } from '@/utils/styleUtils';
+import ButtonSubmit from '@/components/UI/ButtonSubmit.vue';
 
 const employee = ref('');
 const authorizations = ref<AuthorizationRequest[]>([]);
-
+const loadingSubmit = ref(false);
 const authOnCreate = ref<AuthorizationRequest>({
     employee: '',
     date_request: String(new Date().toISOString().split('T')[0]),
@@ -34,18 +35,20 @@ async function fetchEmployeeAuthorizations() {
     }
 }
 
-const createLeave = async () => {
+const createAuthorization = async () => {
     authOnCreate.value = {
         ...authOnCreate.value,
         employee: employee.value,
         duration: duration.value
     }
-    console.log(authOnCreate.value)
+    loadingSubmit.value = true
     try {
         await AuthorizationService.post(authOnCreate.value)
         await fetchEmployeeAuthorizations()
     } catch (error: any) {
         console.log(error.response)
+    } finally {
+        loadingSubmit.value = false;
     }
 }
 
@@ -150,7 +153,7 @@ onMounted(fetchEmployeeAuthorizations)
                     <h2 class="text-xl font-black text-slate-800 uppercase tracking-tight">Nouvelle Sortie</h2>
                 </div>
 
-                <form class="space-y-6" @submit.prevent="createLeave">
+                <form class="space-y-6" @submit.prevent="createAuthorization">
                     <div class="space-y-2">
                         <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Date de
                             sortie</label>
@@ -186,10 +189,7 @@ onMounted(fetchEmployeeAuthorizations)
                             class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-5 py-4 text-sm font-medium outline-none focus:border-indigo-500 transition-all resize-none"></textarea>
                     </div>
 
-                    <button type="submit"
-                        class="w-full px-6 py-3 rounded-2xl bg-blue-600 text-white border border-blue-500 hover:bg-blue-700 font-black text-[10px] uppercase tracking-widest shadow-lg shadow-blue-100 transition-all duration-300">
-                        Soumettre
-                    </button>
+                    <ButtonSubmit :loading="loadingSubmit" submit-label="Soumettre" ></ButtonSubmit>
                 </form>
             </div>
         </div>

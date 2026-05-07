@@ -3,10 +3,12 @@ import { onMounted, ref } from 'vue';
 import type { Meeting } from '@/types/Meeting';
 import MeetingService from '@/services/MeetingServices';
 import LoadingContent from '@/components/LoadingContent.vue';
+import ButtonSubmit from '@/components/UI/ButtonSubmit.vue';
 
 const meetings = ref<Meeting[]>([]);
 const employee = ref<string>('');
 const loading = ref(false);
+const loadingSubmit = ref(false);
 const meetingOnCreate = ref<Meeting>({
     employee: '',
     meeting_date: String(new Date().toISOString().split('T')[0]),
@@ -24,7 +26,7 @@ async function fetchEmployeeMeetings() {
         meetings.value = res;
     } catch (error) {
         console.error(error);
-        
+
     } finally {
         loading.value = false;
     }
@@ -35,7 +37,7 @@ const createMeeting = async () => {
         ...meetingOnCreate.value,
         employee: employee.value
     };
-
+    loadingSubmit.value = true;
     try {
         await MeetingService.post(meetingOnCreate.value);
         await fetchEmployeeMeetings();
@@ -48,6 +50,8 @@ const createMeeting = async () => {
         };
     } catch (error) {
         console.error(error);
+    } finally {
+        loadingSubmit.value = false;
     }
 };
 
@@ -142,10 +146,8 @@ onMounted(fetchEmployeeMeetings);
                         <textarea v-model="meetingOnCreate.participants" placeholder="Liste des participants"
                             class="w-full px-4 py-3 rounded-2xl border border-slate-200 focus:border-blue-500 focus:ring-0 text-sm font-medium"></textarea>
                     </div>
-                    <button type="submit"
-                        class="w-full px-6 py-3 rounded-2xl bg-blue-600 text-white border border-blue-500 hover:bg-blue-700 font-black text-[10px] uppercase tracking-widest shadow-lg shadow-blue-100 transition-all duration-300">
-                        Ajouter
-                    </button>
+                    <ButtonSubmit :loading="loadingSubmit" submit-label="Ajouter"></ButtonSubmit>
+
                 </form>
             </div>
         </div>

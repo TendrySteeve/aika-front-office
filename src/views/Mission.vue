@@ -3,10 +3,11 @@ import { onMounted, ref } from 'vue';
 import type { Mission } from '@/types/Mission';
 import MissionService from '@/services/MissionServices';
 import { calculatedDayDuration } from '@/utils/calculDuration';
+import ButtonSubmit from '@/components/UI/ButtonSubmit.vue';
 
 const missions = ref<Mission[]>([]);
 const loading = ref(false);
-
+const loadingSubmit = ref(false);
 const missionOnCreate = ref<Mission>({
     mission_start: '',
     mission_end: '',
@@ -36,13 +37,15 @@ const createMission = async () => {
         })
     };
 
-    console.log(missionOnCreate.value)
+    loadingSubmit.value = true;
 
     try {
         await MissionService.post(missionOnCreate.value);
         fetchMissions();
     } catch (error) {
         console.error(error);
+    } finally {
+        loadingSubmit.value = false;
     }
 };
 
@@ -109,7 +112,7 @@ onMounted(fetchMissions);
                             </button>
                         </div>
                         <div class="text-sm text-slate-600">
-                            <strong>Durée :</strong> {{ mission.duration }} jour{{ mission.duration > 1 ? 's' : ''}}
+                            <strong>Durée :</strong> {{ mission.duration }} jour{{ mission.duration > 1 ? 's' : '' }}
                         </div>
                         <div class="text-sm text-slate-600">
                             <strong>Projet :</strong> {{ mission.project }}
@@ -147,10 +150,8 @@ onMounted(fetchMissions);
                         <textarea v-model="missionOnCreate.activity" placeholder="Détail sur les activités" rows="4"
                             class="w-full px-4 py-3 rounded-2xl border border-slate-200 focus:border-blue-500 focus:ring-0 text-sm font-medium"></textarea>
                     </div>
-                    <button type="submit"
-                        class="w-full px-6 py-3 rounded-2xl bg-blue-600 text-white border border-blue-500 hover:bg-blue-700 font-black text-[10px] uppercase tracking-widest shadow-lg shadow-blue-100 transition-all duration-300">
-                        Ajouter
-                    </button>
+                    <ButtonSubmit :loading="loadingSubmit" submit-label="Ajouter"></ButtonSubmit>
+
                 </form>
             </div>
         </div>
