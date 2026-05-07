@@ -4,6 +4,7 @@ import type { Meeting } from '@/types/Meeting';
 import MeetingService from '@/services/MeetingServices';
 import LoadingContent from '@/components/LoadingContent.vue';
 import ButtonSubmit from '@/components/UI/ButtonSubmit.vue';
+import LoadingItems from '@/components/LoadingItems.vue';
 
 const meetings = ref<Meeting[]>([]);
 const employee = ref<string>('');
@@ -69,7 +70,6 @@ onMounted(fetchEmployeeMeetings);
 </script>
 
 <template>
-    <LoadingContent v-if="loading" />
 
     <div class="flex flex-col lg:flex-row gap-8 p-4 lg:p-8 bg-slate-50">
         <!-- Historique des Réunions -->
@@ -84,8 +84,9 @@ onMounted(fetchEmployeeMeetings);
                     <span class="text-xl font-black text-blue-600">{{ meetings.length }}</span>
                 </div>
             </div>
+            <LoadingItems v-if="loading" />
 
-            <div class="grid grid-cols-1 gap-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+            <div class="grid grid-cols-1 gap-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar" v-else>
                 <div v-if="meetings.length === 0" class="text-center py-10 text-slate-400 italic">
                     Aucune réunion enregistrée.
                 </div>

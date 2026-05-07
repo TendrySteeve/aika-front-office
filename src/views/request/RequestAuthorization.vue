@@ -6,10 +6,12 @@ import { calculatedHourDuration } from '@/utils/calculDuration';
 import AuthorizationService from '@/services/AuthorizationServices';
 import { getStatusStyle } from '@/utils/styleUtils';
 import ButtonSubmit from '@/components/UI/ButtonSubmit.vue';
+import LoadingItems from '@/components/LoadingItems.vue';
 
 const employee = ref('');
 const authorizations = ref<AuthorizationRequest[]>([]);
 const loadingSubmit = ref(false);
+const loading = ref(false);
 const authOnCreate = ref<AuthorizationRequest>({
     employee: '',
     date_request: String(new Date().toISOString().split('T')[0]),
@@ -26,12 +28,15 @@ const duration = computed(() => calculatedHourDuration(authOnCreate.value.depart
 async function fetchEmployeeAuthorizations() {
     const matricule = localStorage.getItem('matricule');
     if (!matricule) return 'Aucun employé conneté'
+    loading.value = true;
     employee.value = matricule;
     try {
         const res = await AuthorizationService.getEmployeeAuthorizations(matricule);
         authorizations.value = res;
     } catch (error) {
         
+    } finally {
+        loading.value = false;
     }
 }
 
@@ -80,8 +85,9 @@ onMounted(fetchEmployeeAuthorizations)
                     <span class="text-xl font-black text-indigo-600">{{ authorizations.length }}</span>
                 </div>
             </div>
+            <LoadingItems v-if="loading" />
 
-            <div class="grid grid-cols-1 gap-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+            <div class="grid grid-cols-1 gap-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar" v-else>
                 <div v-for="auth in authorizations" :key="auth.id"
                     class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm hover:shadow-md transition-all group relative overflow-hidden">
 

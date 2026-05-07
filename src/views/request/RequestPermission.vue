@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import LoadingItems from '@/components/LoadingItems.vue';
 import ButtonSubmit from '@/components/UI/ButtonSubmit.vue';
 import { PERIOD_CHOICES, STATUS_CHOICES } from '@/enums/choices';
 import PermissionServices from '@/services/PermissionServices';
@@ -11,6 +12,7 @@ import { computed, onMounted } from 'vue';
 const permissions = ref<Permission[]>([]);
 const employee = ref<string>('');
 const loadingSubmit = ref(false);
+const loading = ref(false);
 const permissionOnCreate = ref<Permission>({
     employee: '',
     date_request: String(new Date().toISOString().split('T')[0]),
@@ -34,11 +36,14 @@ async function fetchEmployeePermsissions() {
     const matricule = localStorage.getItem('matricule');
     if (!matricule) return 'Aucun employé conneté'
     employee.value = matricule;
+    loading.value = true;
     try {
         const res = await PermissionServices.getEmployeePermissions(matricule);
         permissions.value = res;
     } catch (error) {
 
+    } finally {
+        loading.value = false;
     }
 }
 
@@ -87,8 +92,9 @@ onMounted(fetchEmployeePermsissions)
                     <span class="text-xl font-black text-blue-600">{{ permissions.length }}</span>
                 </div>
             </div>
+            <LoadingItems v-if="loading" />
 
-            <div class="grid grid-cols-1 gap-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+            <div class="grid grid-cols-1 gap-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar" v-else>
                 <div v-for="permission in permissions" :key="permission.id"
                     class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm hover:shadow-md transition-all group relative overflow-hidden">
 

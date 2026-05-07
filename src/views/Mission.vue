@@ -4,6 +4,7 @@ import type { Mission } from '@/types/Mission';
 import MissionService from '@/services/MissionServices';
 import { calculatedDayDuration } from '@/utils/calculDuration';
 import ButtonSubmit from '@/components/UI/ButtonSubmit.vue';
+import LoadingItems from '@/components/LoadingItems.vue';
 
 const missions = ref<Mission[]>([]);
 const loading = ref(false);
@@ -24,6 +25,8 @@ const fetchMissions = async () => {
         missions.value = res;
     } catch (error) {
 
+    } finally {
+        loading.value = false;
     }
 }
 
@@ -75,8 +78,8 @@ onMounted(fetchMissions);
                     <span class="text-xl font-black text-blue-600">{{ missions.length }}</span>
                 </div>
             </div>
-
-            <div class="grid grid-cols-1 gap-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+            <LoadingItems v-if="loading" />
+            <div class="grid grid-cols-1 gap-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar" v-else>
                 <div v-if="missions.length === 0" class="text-center py-10 text-slate-400 italic">
                     Aucun mission enregistrée.
                 </div>

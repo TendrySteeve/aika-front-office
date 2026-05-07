@@ -4,6 +4,7 @@ import type { Telework } from '@/types/Telework';
 import TeleworkService from '@/services/TeleworkServices';
 import LoadingContent from '@/components/LoadingContent.vue';
 import ButtonSubmit from '@/components/UI/ButtonSubmit.vue';
+import LoadingItems from '@/components/LoadingItems.vue';
 
 const teleworks = ref<Telework[]>([]);
 const employee = ref<string>('');
@@ -66,7 +67,6 @@ onMounted(fetchEmployeeTeleworks);
 </script>
 
 <template>
-    <LoadingContent v-if="loading" />
 
     <div class="flex flex-col lg:flex-row gap-8 p-4 lg:p-8 bg-slate-50">
         <div class="flex-1 space-y-6">
@@ -81,8 +81,9 @@ onMounted(fetchEmployeeTeleworks);
                     <span class="text-xl font-black text-blue-600">{{ teleworks.length }}</span>
                 </div>
             </div>
+            <LoadingItems v-if="loading" />
 
-            <div class="grid grid-cols-1 gap-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+            <div class="grid grid-cols-1 gap-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar" v-else>
                 <div v-if="teleworks.length === 0" class="text-center py-10 text-slate-400 italic">
                     Aucune session de télétravail enregistrée.
                 </div>

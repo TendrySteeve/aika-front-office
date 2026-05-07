@@ -6,10 +6,12 @@ import { getStatusStyle } from '@/utils/styleUtils';
 import { calculatedDayDuration } from '@/utils/calculDuration';
 import LeaveServices from '@/services/LeaveServices';
 import ButtonSubmit from '@/components/UI/ButtonSubmit.vue';
+import LoadingItems from '@/components/LoadingItems.vue';
 
 const leaves = ref<Leave[]>([]);
 const employee = ref<string>('');
 const loadingSubmit = ref(false);
+const loading = ref(false);
 const leaveOnCreate = ref<Leave>({
     employee: '',
     date_request: String(new Date().toISOString().split('T')[0]),
@@ -33,11 +35,14 @@ async function fetchEmployeeLeaves() {
     const matricule = localStorage.getItem('matricule');
     if (!matricule) return 'Aucun employé conneté'
     employee.value = matricule;
+    loading.value = true;
     try {
         const res = await LeaveServices.getEmployeeLeaves(matricule);
         leaves.value = res;
     } catch (error) {
 
+    } finally {
+        loading.value = false
     }
 }
 
@@ -86,7 +91,9 @@ onMounted(fetchEmployeeLeaves)
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 gap-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+            <LoadingItems v-if="loading" />
+
+            <div class="grid grid-cols-1 gap-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar" v-else>
                 <div v-for="leave in leaves" :key="leave.id"
                     class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm hover:shadow-md transition-all group relative overflow-hidden">
 

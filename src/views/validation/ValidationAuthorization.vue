@@ -2,15 +2,19 @@
 import { onMounted, ref } from 'vue';
 import type { AuthorizationRequest } from '@/types/Authorization';
 import AuthorizationService from '@/services/AuthorizationServices';
+import LoadingItems from '@/components/LoadingItems.vue';
 
 const pendingAuths = ref<AuthorizationRequest[]>([]);
-
+const loading = ref(false);
 async function fetchPendingAuthorizations() {
+    loading.value = true;
     try {
         const res = await AuthorizationService.getPendingAuthorizations();
         pendingAuths.value = res;
     } catch (error) {
 
+    } finally {
+        loading.value = false;
     }
 }
 
@@ -39,7 +43,9 @@ onMounted(fetchPendingAuthorizations);
 <template>
     <div class="space-y-6">
         <div class="flex-1 overflow-y-auto max-h-[75vh] pr-2 custom-scrollbar">
-            <div class="grid grid-cols-1 gap-4">
+            <LoadingItems v-if="loading" />
+
+            <div class="grid grid-cols-1 gap-4" v-else>
                 <div v-if="pendingAuths.length === 0" class="text-center py-10 text-slate-400 italic">
                     Aucune demande d'autorisation en attente.
                 </div>
