@@ -43,12 +43,12 @@ const navigationItems = computed(() => [
         icon: BriefcaseIcon,
         active: route.path.includes('/mission'),
     },
-    // {
-    //     label: 'Planning',
-    //     to: { name: 'planning' },
-    //     icon: CalendarDaysIcon,
-    //     active: route.name === 'planning',
-    // },
+    {
+        label: 'Planning',
+        to: { name: 'planning' },
+        icon: CalendarDaysIcon,
+        active: route.name === 'planning',
+    },
 ])
 
 const exitApp = () => {
