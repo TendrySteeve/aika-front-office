@@ -1,17 +1,21 @@
 <script setup lang="ts">
+import LoadingItems from '@/components/LoadingItems.vue';
 import PermissionServices from '@/services/PermissionServices';
 import type { Permission } from '@/types/Pemission';
 import { onMounted, ref } from 'vue';
 
 
 const pendingPermissions = ref<Permission[]>([]);
-
-async function fetchPerndingLeaves() {
+const loading = ref(false);
+async function fetchPendingPermissions() {
+    loading.value = true;
     try {
         const res = await PermissionServices.getPendingPermissions();
         pendingPermissions.value = res;
     } catch (error) {
 
+    } finally {
+        loading.value = false;
     }
 }
 
@@ -19,7 +23,7 @@ const handleApprove = async (id?: number) => {
     if (!id) return 'aucun identifiant pour le congé'
     try {
         await PermissionServices.acceptPermission(id);
-        await fetchPerndingLeaves()
+        await fetchPendingPermissions()
     } catch (error) {
 
     }
@@ -28,18 +32,20 @@ const handleReject = async (id?: number) => {
     if (!id) return 'aucun identifiant pour le congé'
     try {
         await PermissionServices.rejectPermission(id);
-        await fetchPerndingLeaves()
+        await fetchPendingPermissions()
     } catch (error) {
 
     }
 };
 
-onMounted(fetchPerndingLeaves);
+onMounted(fetchPendingPermissions);
 </script>
 <template>
     <div class="space-y-6">
         <div class="flex-1 overflow-y-auto max-h-[75vh] pr-2 custom-scrollbar">
-            <div class="grid grid-cols-1 gap-4">
+            <LoadingItems v-if="loading" />
+
+            <div class="grid grid-cols-1 gap-4" v-else>
                 <div v-if="pendingPermissions.length === 0" class="text-center py-10 text-slate-400 italic">
                     Aucune demande de permission en attente.
                 </div>

@@ -1,269 +1,447 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { emmployeeApi } from '@/services/employee-api'
-import type { CompleteEmployee } from '@/types/Employee'
+import { onMounted, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import EmployeeService from '@/services/EmployeeServices'
+import type { EmployeeComplet } from '@/types/Employee'
+
+import {
+    getSexLabel,
+    getMaritalStatusLabel,
+    getContractTypeLabel,
+    getLevelSkillLabel
+} from '@/utils/choicesLabel'
+import LoadingContent from '@/components/LoadingContent.vue'
 
 const router = useRouter()
+const route = useRoute()
 
-const employee = ref<CompleteEmployee | null>(null)
-const loading = ref(true)
-const errorMessage = ref('')
+const employee = ref<EmployeeComplet | null>(null)
+const loading = ref(false)
 
-const matricule = () => localStorage.getItem('matricule') ?? ''
-
-const displayValue = (value: unknown, fallback = 'Non renseigne') => {
-  if (value === null || value === undefined) return fallback
-  if (typeof value === 'string' && value.trim() === '') return fallback
-  return String(value)
+const fetchEmployee = async () => {
+    loading.value = true
+    try {
+        const matricule = localStorage.getItem("matricule") as string;
+        employee.value = await EmployeeService.get(matricule)
+    } catch (error) {
+        router.push({ name: 'employee' })
+    } finally {
+        loading.value = false
+    }
 }
 
-const fullName = computed(() => {
-  if (!employee.value) return 'Collaborateur'
-  const parts = [employee.value.first_name, employee.value.last_name].filter((part) => typeof part === 'string' && part.trim() !== '')
-  return parts.length > 0 ? parts.join(' ') : 'Collaborateur'
-})
-
-const latestContract = computed(() => {
-  const contracts = employee.value?.contracts ?? []
-  if (contracts.length === 0) return null
-  return [...contracts].sort((a, b) => (b.contract_start ?? '').localeCompare(a.contract_start ?? ''))[0]
-})
-
-const skillHighlights = computed(() => (employee.value?.skills ?? []).slice(0, 4))
-
-const loadEmployeeInformation = async () => {
-  loading.value = true
-  errorMessage.value = ''
-
-  const employeeMatricule = matricule()
-  if (!employeeMatricule) {
-    errorMessage.value = 'Aucun matricule employe disponible.'
-    loading.value = false
-    return
-  }
-
-  try {
-    const { data } = await emmployeeApi.fetchCompleteEmployeeData(employeeMatricule)
-    employee.value = data
-  } catch (error) {
-    console.error(error)
-    errorMessage.value = "Impossible de charger les informations de l'employe."
-  } finally {
-    loading.value = false
-  }
+const formatDate = (date: string) => {
+    if (!date) return '-'
+    return new Date(date).toLocaleDateString('fr-FR')
 }
 
-const goToForm = () => {
-  router.push({ name: 'employee' })
-}
 
-onMounted(loadEmployeeInformation)
-</script>
+onMounted(fetchEmployee)
+</script><template>
+    <LoadingContent v-if="loading" />
 
-<template>
-  <div class="space-y-8">
-    <section class="relative overflow-hidden rounded-[2.5rem] border border-slate-200 bg-white shadow-sm">
-      <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(14,165,233,0.18),_transparent_35%),radial-gradient(circle_at_bottom_right,_rgba(16,185,129,0.14),_transparent_30%)]"></div>
-      <div class="relative p-8 md:p-10">
-        <div class="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
-          <div class="space-y-4">
-            <span class="inline-flex rounded-full border border-cyan-200 bg-cyan-50 px-4 py-1 text-[11px] font-black uppercase tracking-[0.25em] text-cyan-700">
-              Espace employe
-            </span>
-            <div class="space-y-2">
-              <h1 class="text-3xl font-black tracking-tight text-slate-900 md:text-5xl">{{ fullName }}</h1>
-              <p class="max-w-2xl text-sm leading-7 text-slate-600 md:text-base">
-                Cette page presente un apercu de votre dossier employe avant de passer au formulaire complet de mise a jour.
-              </p>
-            </div>
-            <div class="flex flex-wrap gap-3 text-sm">
-              <div class="rounded-2xl border border-slate-200 bg-white/80 px-4 py-3">
-                <p class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Matricule</p>
-                <p class="font-mono font-bold text-slate-800">{{ displayValue(employee?.matricule) }}</p>
-              </div>
-              <div class="rounded-2xl border border-slate-200 bg-white/80 px-4 py-3">
-                <p class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Email</p>
-                <p class="font-semibold text-slate-800">{{ displayValue(employee?.email) }}</p>
-              </div>
-              <div class="rounded-2xl border border-slate-200 bg-white/80 px-4 py-3">
-                <p class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Departement</p>
-                <p class="font-semibold text-slate-800">{{ displayValue(employee?.professional_info?.department) }}</p>
-              </div>
-            </div>
-          </div>
+    <div class="max-w-5xl mx-auto px-4 py-6">
 
-          <div class="flex flex-col gap-3 sm:flex-row">
-            <button
-              type="button"
-              @click="loadEmployeeInformation"
-              class="rounded-2xl border border-slate-200 bg-white px-6 py-4 text-sm font-black uppercase tracking-[0.2em] text-slate-700 transition hover:border-cyan-300 hover:text-cyan-700"
-            >
-              Actualiser
+        <!-- Actions -->
+        <div class="flex gap-3 mb-6">
+            <button @click="router.push({ name: 'employee' })"
+                class="px-5 py-2 text-sm font-medium rounded border border-gray-300 bg-white text-gray-800 hover:bg-gray-50 transition-colors">
+                Modifier les informations
             </button>
-            <button
-              type="button"
-              @click="goToForm"
-              class="rounded-2xl bg-blue-600 px-6 py-4 text-sm font-black uppercase tracking-[0.2em] text-white shadow-lg shadow-blue-200 transition hover:bg-emerald-600"
-            >
-              Passer au formulaire
-            </button>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <div v-if="errorMessage" class="rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700">
-      {{ errorMessage }}
-    </div>
-
-    <div v-if="loading" class="rounded-[2rem] border border-slate-200 bg-white px-8 py-10 text-slate-500 shadow-sm">
-      Chargement des informations employe...
-    </div>
-
-    <template v-else-if="employee">
-      <section class="grid gap-6 lg:grid-cols-[1.5fr_1fr]">
-        <div class="rounded-[2rem] border border-slate-200 bg-white p-8 shadow-sm">
-          <div class="mb-6 flex items-center justify-between">
-            <div>
-              <p class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Identite</p>
-              <h2 class="mt-2 text-xl font-black text-slate-900">Informations personnelles</h2>
-            </div>
-            <div class="rounded-full bg-blue-50 px-4 py-2 text-xs font-black uppercase tracking-[0.2em] text-blue-700">
-              Lecture seule
-            </div>
-          </div>
-
-          <div class="grid gap-4 md:grid-cols-2">
-            <div class="rounded-2xl bg-slate-50 p-5">
-              <p class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Date de naissance</p>
-              <p class="mt-2 text-sm font-semibold text-slate-800">{{ displayValue(employee.personal_info?.birth_date) }}</p>
-            </div>
-            <div class="rounded-2xl bg-slate-50 p-5">
-              <p class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Lieu de naissance</p>
-              <p class="mt-2 text-sm font-semibold text-slate-800">{{ displayValue(employee.personal_info?.birth_place) }}</p>
-            </div>
-            <div class="rounded-2xl bg-slate-50 p-5">
-              <p class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Genre</p>
-              <p class="mt-2 text-sm font-semibold text-slate-800">{{ displayValue(employee.personal_info?.gender) }}</p>
-            </div>
-            <div class="rounded-2xl bg-slate-50 p-5">
-              <p class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Nationalite</p>
-              <p class="mt-2 text-sm font-semibold text-slate-800">{{ displayValue(employee.personal_info?.nationality) }}</p>
-            </div>
-            <div class="rounded-2xl bg-slate-50 p-5">
-              <p class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Etat civil</p>
-              <p class="mt-2 text-sm font-semibold text-slate-800">{{ displayValue(employee.personal_info?.marital_status) }}</p>
-            </div>
-            <div class="rounded-2xl bg-slate-50 p-5">
-              <p class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Nombre d'enfants</p>
-              <p class="mt-2 text-sm font-semibold text-slate-800">{{ displayValue(employee.personal_info?.child_count) }}</p>
-            </div>
-          </div>
         </div>
 
-        <div class="rounded-[2rem] border border-slate-200 bg-slate-900 p-8 text-white shadow-sm">
-          <p class="text-[10px] font-black uppercase tracking-[0.2em] text-cyan-300">Situation actuelle</p>
-          <h2 class="mt-2 text-2xl font-black">Statut professionnel</h2>
+        <!-- Contenu PDF -->
+        <div v-if="employee" id="pdf-content" class="rounded-xl overflow-hidden shadow-lg border border-gray-200">
 
-          <div class="mt-8 space-y-4">
-            <div class="rounded-2xl border border-white/10 bg-white/5 p-5">
-              <p class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Poste</p>
-              <p class="mt-2 text-sm font-semibold text-white">{{ displayValue(employee.professional_info?.job_title) }}</p>
+            <!-- EN-TÊTE -->
+            <div class="bg-blue-900 text-white px-10 py-9 relative overflow-hidden">
+                <!-- Cercle décoratif -->
+                <div class="absolute -top-8 -right-8 w-44 h-44 rounded-full bg-white/4 pointer-events-none"></div>
+
+                <p class="text-[10px] tracking-[3px] uppercase text-white mb-2">
+                    Dossier Ressources Humaines
+                </p>
+                <h1 class="font-serif text-3xl font-bold leading-tight mb-1">
+                    {{ employee.first_name }} {{ employee.last_name }}
+                </h1>
+                <p class="text-xs text-white/50 tracking-wide mb-4">
+                    Matricule : {{ employee.matricule }}
+                </p>
+
+                <!-- Badges rapides -->
+                <div class="flex flex-wrap gap-2">
+                    <span v-if="employee.professional?.job_title"
+                        class="inline-flex items-center gap-1.5 bg-white/10 border border-white/20 rounded-full px-3.5 py-1 text-xs text-white/85">
+                        💼 {{ employee.professional.job_title }}
+                    </span>
+                    <span v-if="employee.professional?.departement"
+                        class="inline-flex items-center gap-1.5 bg-white/10 border border-white/20 rounded-full px-3.5 py-1 text-xs text-white/85">
+                        🏢 {{ employee.professional.departement }}
+                    </span>
+                </div>
+
+                <p class="absolute bottom-4 right-10 text-[10px] text-white/30 tracking-wide">
+                    Généré le {{ new Date().toLocaleDateString('fr-FR') }}
+                </p>
             </div>
-            <div class="rounded-2xl border border-white/10 bg-white/5 p-5">
-              <p class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Superieur</p>
-              <p class="mt-2 text-sm font-semibold text-white">{{ displayValue(employee.professional_info?.superior) }}</p>
+
+            <!-- CORPS -->
+            <div class="bg-white px-10 py-8 space-y-7">
+
+                <!-- ── INFORMATIONS GÉNÉRALES ── -->
+                <section>
+                    <div class="flex items-center gap-2.5 mb-4 pb-2.5 border-b border-gray-200">
+                        <div class="w-2 h-2 rounded-full bg-blue-900 shrink-0"></div>
+                        <h2 class="text-[10px] font-semibold tracking-[2.5px] uppercase text-gray-500">
+                            Informations générales
+                        </h2>
+                    </div>
+                    <div class="grid grid-cols-2 gap-x-6 gap-y-3">
+                        <div class="field">
+                            <label
+                                class="block text-[9px] uppercase tracking-[1.5px] text-gray-400 mb-0.5">Prénom</label>
+                            <p class="text-[13px] font-medium text-gray-900">{{ employee.first_name }}</p>
+                        </div>
+                        <div class="field">
+                            <label class="block text-[9px] uppercase tracking-[1.5px] text-gray-400 mb-0.5">Nom</label>
+                            <p class="text-[13px] font-medium text-gray-900">{{ employee.last_name }}</p>
+                        </div>
+                        <div class="field">
+                            <label class="block text-[9px] uppercase tracking-[1.5px] text-gray-400 mb-0.5">Date de
+                                naissance</label>
+                            <p class="text-[13px] font-medium text-gray-900">{{ formatDate(employee.birth_date) }}</p>
+                        </div>
+                        <div class="field">
+                            <label class="block text-[9px] uppercase tracking-[1.5px] text-gray-400 mb-0.5">Lieu de
+                                naissance</label>
+                            <p class="text-[13px] font-medium text-gray-900">{{ employee.birth_place }}</p>
+                        </div>
+                        <div class="field">
+                            <label class="block text-[9px] uppercase tracking-[1.5px] text-gray-400 mb-0.5">Sexe</label>
+                            <p class="text-[13px] font-medium text-gray-900">{{ getSexLabel(employee.sex) }}</p>
+                        </div>
+                        <div class="field">
+                            <label
+                                class="block text-[9px] uppercase tracking-[1.5px] text-gray-400 mb-0.5">Nationalité</label>
+                            <p class="text-[13px] font-medium text-gray-900">{{ employee.nationality }}</p>
+                        </div>
+                        <div class="field">
+                            <label class="block text-[9px] uppercase tracking-[1.5px] text-gray-400 mb-0.5">Situation
+                                matrimoniale</label>
+                            <p class="text-[13px] font-medium text-gray-900">{{
+                                getMaritalStatusLabel(employee.marital_status) }}</p>
+                        </div>
+                        <div class="field">
+                            <label class="block text-[9px] uppercase tracking-[1.5px] text-gray-400 mb-0.5">Nombre
+                                d'enfants</label>
+                            <p class="text-[13px] font-medium text-gray-900">{{ employee.child_count ?? '—' }}</p>
+                        </div>
+                    </div>
+                </section>
+
+                <hr class="border-gray-100">
+
+                <!-- ── COORDONNÉES ── -->
+                <section v-if="employee.coordinate">
+                    <div class="flex items-center gap-2.5 mb-4 pb-2.5 border-b border-gray-200">
+                        <div class="w-2 h-2 rounded-full bg-blue-900 shrink-0"></div>
+                        <h2 class="text-[10px] font-semibold tracking-[2.5px] uppercase text-gray-500">Coordonnées</h2>
+                    </div>
+                    <div class="grid grid-cols-2 gap-x-6 gap-y-3">
+                        <div class="field">
+                            <label
+                                class="block text-[9px] uppercase tracking-[1.5px] text-gray-400 mb-0.5">Téléphone</label>
+                            <p class="text-[13px] font-medium text-gray-900">{{ employee.coordinate.phone_number }}</p>
+                        </div>
+                        <div class="field">
+                            <label
+                                class="block text-[9px] uppercase tracking-[1.5px] text-gray-400 mb-0.5">Email</label>
+                            <p class="text-[13px] font-medium text-gray-900">{{ employee.coordinate.email }}</p>
+                        </div>
+                        <div class="col-span-2 field">
+                            <label
+                                class="block text-[9px] uppercase tracking-[1.5px] text-gray-400 mb-0.5">Adresse</label>
+                            <p class="text-[13px] font-medium text-gray-900">{{ employee.coordinate.home_address }}</p>
+                        </div>
+                        <div v-if="employee.coordinate.emergency_contact_name" class="field">
+                            <label class="block text-[9px] uppercase tracking-[1.5px] text-gray-400 mb-0.5">Contact
+                                d'urgence</label>
+                            <p class="text-[13px] font-medium text-gray-900">{{
+                                employee.coordinate.emergency_contact_name }}</p>
+                        </div>
+                        <div v-if="employee.coordinate.emergency_contact_phone" class="field">
+                            <label class="block text-[9px] uppercase tracking-[1.5px] text-gray-400 mb-0.5">Téléphone
+                                urgence</label>
+                            <p class="text-[13px] font-medium text-gray-900">{{
+                                employee.coordinate.emergency_contact_phone }}</p>
+                        </div>
+                    </div>
+                </section>
+
+                <hr class="border-gray-100">
+
+                <!-- ── ADMINISTRATIF ── -->
+                <section v-if="employee.administrative">
+                    <div class="flex items-center gap-2.5 mb-4 pb-2.5 border-b border-gray-200">
+                        <div class="w-2 h-2 rounded-full bg-blue-900 shrink-0"></div>
+                        <h2 class="text-[10px] font-semibold tracking-[2.5px] uppercase text-gray-500">Informations
+                            administratives</h2>
+                    </div>
+                    <div class="grid grid-cols-3 gap-x-5 gap-y-3">
+                        <div class="field">
+                            <label class="block text-[9px] uppercase tracking-[1.5px] text-gray-400 mb-0.5">N°
+                                CIN</label>
+                            <p class="text-[13px] font-medium text-gray-900">{{ employee.administrative.cin_number }}
+                            </p>
+                        </div>
+                        <div class="field">
+                            <label class="block text-[9px] uppercase tracking-[1.5px] text-gray-400 mb-0.5">Date
+                                délivrance CIN</label>
+                            <p class="text-[13px] font-medium text-gray-900">{{
+                                formatDate(employee.administrative.cin_issue_date) }}</p>
+                        </div>
+                        <div class="field">
+                            <label class="block text-[9px] uppercase tracking-[1.5px] text-gray-400 mb-0.5">Lieu
+                                délivrance CIN</label>
+                            <p class="text-[13px] font-medium text-gray-900">{{ employee.administrative.cin_issue_place
+                                }}</p>
+                        </div>
+                        <template v-if="employee.administrative.passport_number">
+                            <div class="field">
+                                <label class="block text-[9px] uppercase tracking-[1.5px] text-gray-400 mb-0.5">N°
+                                    Passeport</label>
+                                <p class="text-[13px] font-medium text-gray-900">{{
+                                    employee.administrative.passport_number }}</p>
+                            </div>
+                            <div class="field">
+                                <label class="block text-[9px] uppercase tracking-[1.5px] text-gray-400 mb-0.5">Date
+                                    délivrance</label>
+                                <p class="text-[13px] font-medium text-gray-900">{{
+                                    formatDate(employee.administrative.passport_issue_date!) }}</p>
+                            </div>
+                            <div class="field">
+                                <label class="block text-[9px] uppercase tracking-[1.5px] text-gray-400 mb-0.5">Lieu
+                                    délivrance</label>
+                                <p class="text-[13px] font-medium text-gray-900">{{
+                                    employee.administrative.passport_issue_place }}</p>
+                            </div>
+                        </template>
+                        <div class="field">
+                            <label class="block text-[9px] uppercase tracking-[1.5px] text-gray-400 mb-0.5">NIF</label>
+                            <p class="text-[13px] font-medium text-gray-900">{{ employee.administrative.nif }}</p>
+                        </div>
+                        <div class="field">
+                            <label class="block text-[9px] uppercase tracking-[1.5px] text-gray-400 mb-0.5">STAT</label>
+                            <p class="text-[13px] font-medium text-gray-900">{{ employee.administrative.stat }}</p>
+                        </div>
+                    </div>
+                </section>
+
+                <hr class="border-gray-100">
+
+                <!-- ── PROFESSIONNEL ── -->
+                <section v-if="employee.professional">
+                    <div class="flex items-center gap-2.5 mb-4 pb-2.5 border-b border-gray-200">
+                        <div class="w-2 h-2 rounded-full bg-blue-900 shrink-0"></div>
+                        <h2 class="text-[10px] font-semibold tracking-[2.5px] uppercase text-gray-500">Informations
+                            professionnelles
+                        </h2>
+                    </div>
+                    <div class="grid grid-cols-2 gap-x-6 gap-y-3">
+                        <div class="field">
+                            <label
+                                class="block text-[9px] uppercase tracking-[1.5px] text-gray-400 mb-0.5">Département</label>
+                            <p class="text-[13px] font-medium text-gray-900">{{ employee.professional.departement }}</p>
+                        </div>
+                        <div class="field">
+                            <label
+                                class="block text-[9px] uppercase tracking-[1.5px] text-gray-400 mb-0.5">Poste</label>
+                            <p class="text-[13px] font-medium text-gray-900">{{ employee.professional.job_title }}</p>
+                        </div>
+                        <div v-if="employee.professional.superior" class="field">
+                            <label class="block text-[9px] uppercase tracking-[1.5px] text-gray-400 mb-0.5">Supérieur
+                                hiérarchique</label>
+                            <p class="text-[13px] font-medium text-gray-900">{{ employee.professional.superior }}</p>
+                        </div>
+                    </div>
+                </section>
+
+                <hr class="border-gray-100">
+
+                <!-- ── BANQUE ── -->
+                <section v-if="employee.bank">
+                    <div class="flex items-center gap-2.5 mb-4 pb-2.5 border-b border-gray-200">
+                        <div class="w-2 h-2 rounded-full bg-blue-900 shrink-0"></div>
+                        <h2 class="text-[10px] font-semibold tracking-[2.5px] uppercase text-gray-500">Informations
+                            bancaires</h2>
+                    </div>
+                    <div class="grid grid-cols-3 gap-x-5 gap-y-3">
+                        <div class="field">
+                            <label class="block text-[9px] uppercase tracking-[1.5px] text-gray-400 mb-0.5">Mode de
+                                paiement</label>
+                            <p class="text-[13px] font-medium text-gray-900">{{ employee.bank.payment_method }}</p>
+                        </div>
+                        <div class="field">
+                            <label
+                                class="block text-[9px] uppercase tracking-[1.5px] text-gray-400 mb-0.5">Banque</label>
+                            <p class="text-[13px] font-medium text-gray-900">{{ employee.bank.bank_name }}</p>
+                        </div>
+                        <div class="field">
+                            <label class="block text-[9px] uppercase tracking-[1.5px] text-gray-400 mb-0.5">RIB</label>
+                            <p class="text-[13px] font-medium text-gray-900">{{ employee.bank.rib }}</p>
+                        </div>
+                        <div class="field">
+                            <label class="block text-[9px] uppercase tracking-[1.5px] text-gray-400 mb-0.5">N° de
+                                compte</label>
+                            <p class="text-[13px] font-medium text-gray-900">{{ employee.bank.account_number }}</p>
+                        </div>
+                        <div class="field">
+                            <label class="block text-[9px] uppercase tracking-[1.5px] text-gray-400 mb-0.5">Code
+                                guichet</label>
+                            <p class="text-[13px] font-medium text-gray-900">{{ employee.bank.code_guichet }}</p>
+                        </div>
+                        <div class="field">
+                            <label class="block text-[9px] uppercase tracking-[1.5px] text-gray-400 mb-0.5">Code
+                                banque</label>
+                            <p class="text-[13px] font-medium text-gray-900">{{ employee.bank.code_bank }}</p>
+                        </div>
+                    </div>
+                </section>
+
+                <hr class="border-gray-100">
+
+                <!-- ── CONTRATS ── -->
+                <section v-if="employee.contracts?.length">
+                    <div class="flex items-center gap-2.5 mb-4 pb-2.5 border-b border-gray-200">
+                        <div class="w-2 h-2 rounded-full bg-blue-900 shrink-0"></div>
+                        <h2 class="text-[10px] font-semibold tracking-[2.5px] uppercase text-gray-500">Contrats</h2>
+                    </div>
+                    <div class="space-y-3">
+                        <div v-for="c in employee.contracts" :key="c.id"
+                            class="border border-gray-200 border-l-[3px] border-l-blue-900 rounded-r-lg bg-gray-50 px-4 py-3.5">
+                            <span
+                                class="inline-block bg-blue-900 text-amber-200 text-[9px] tracking-wide px-3 py-0.5 rounded-full uppercase mb-3">
+                                {{ getContractTypeLabel(c.contract_type) }}
+                            </span>
+                            <div class="grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-4">
+                                <div class="field">
+                                    <label
+                                        class="block text-[9px] uppercase tracking-[1.5px] text-gray-400 mb-0.5">Type</label>
+                                    <p class="text-[13px] font-medium text-gray-900">{{
+                                        getContractTypeLabel(c.contract_type) }}</p>
+                                </div>
+                                <div class="field">
+                                    <label class="block text-[9px] uppercase tracking-[1.5px] text-gray-400 mb-0.5">Date
+                                        de
+                                        début</label>
+                                    <p class="text-[13px] font-medium text-gray-900">{{ formatDate(c.contract_start) }}
+                                    </p>
+                                </div>
+                                <div class="field">
+                                    <label class="block text-[9px] uppercase tracking-[1.5px] text-gray-400 mb-0.5">Date
+                                        de fin</label>
+                                    <p class="text-[13px] font-medium"
+                                        :class="c.contract_end ? 'text-gray-900' : 'text-gray-400 italic'">
+                                        {{ c.contract_end ? formatDate(c.contract_end) : '—' }}
+                                    </p>
+                                </div>
+                                <div class="field">
+                                    <label class="block text-[9px] uppercase tracking-[1.5px] text-gray-400 mb-0.5">Lieu
+                                        de
+                                        travail</label>
+                                    <p class="text-[13px] font-medium text-gray-900">{{ c.work_location }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <hr class="border-gray-100">
+
+                <!-- ── DIPLÔMES ── -->
+                <section v-if="employee.degrees?.length">
+                    <div class="flex items-center gap-2.5 mb-4 pb-2.5 border-b border-gray-200">
+                        <div class="w-2 h-2 rounded-full bg-blue-900 shrink-0"></div>
+                        <h2 class="text-[10px] font-semibold tracking-[2.5px] uppercase text-gray-500">Diplômes</h2>
+                    </div>
+                    <div class="space-y-3">
+                        <div v-for="d in employee.degrees" :key="d.id"
+                            class="border border-gray-200 border-l-[3px] border-l-blue-900 rounded-r-lg bg-gray-50 px-4 py-3.5">
+                            <div class="grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-3">
+                                <div class="field">
+                                    <label
+                                        class="block text-[9px] uppercase tracking-[1.5px] text-gray-400 mb-0.5">Diplôme</label>
+                                    <p class="text-[13px] font-medium text-gray-900">{{ d.degree_name }}</p>
+                                </div>
+                                <div class="field">
+                                    <label
+                                        class="block text-[9px] uppercase tracking-[1.5px] text-gray-400 mb-0.5">Établissement</label>
+                                    <p class="text-[13px] font-medium text-gray-900">{{ d.institution }}</p>
+                                </div>
+                                <div v-if="d.graduation_year" class="field">
+                                    <label
+                                        class="block text-[9px] uppercase tracking-[1.5px] text-gray-400 mb-0.5">Année
+                                        d'obtention</label>
+                                    <p class="text-[13px] font-medium text-gray-900">{{ d.graduation_year }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <hr class="border-gray-100">
+
+                <!-- ── FORMATIONS ── -->
+                <section v-if="employee.educations?.length">
+                    <div class="flex items-center gap-2.5 mb-4 pb-2.5 border-b border-gray-200">
+                        <div class="w-2 h-2 rounded-full bg-blue-900 shrink-0"></div>
+                        <h2 class="text-[10px] font-semibold tracking-[2.5px] uppercase text-gray-500">Formations</h2>
+                    </div>
+                    <div class="space-y-3">
+                        <div v-for="e in employee.educations" :key="e.id"
+                            class="border border-gray-200 border-l-[3px] border-l-blue-900 rounded-r-lg bg-gray-50 px-4 py-3.5">
+                            <div class="grid grid-cols-2 gap-x-6 gap-y-2">
+                                <div class="field">
+                                    <label
+                                        class="block text-[9px] uppercase tracking-[1.5px] text-gray-400 mb-0.5">Niveau</label>
+                                    <p class="text-[13px] font-medium text-gray-900">{{ e.level }}</p>
+                                </div>
+                                <div class="field">
+                                    <label
+                                        class="block text-[9px] uppercase tracking-[1.5px] text-gray-400 mb-0.5">Établissement</label>
+                                    <p class="text-[13px] font-medium text-gray-900">{{ e.institution }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <hr class="border-gray-100">
+
+                <!-- ── COMPÉTENCES ── -->
+                <section v-if="employee.skills?.length">
+                    <div class="flex items-center gap-2.5 mb-4 pb-2.5 border-b border-gray-200">
+                        <div class="w-2 h-2 rounded-full bg-blue-900 shrink-0"></div>
+                        <h2 class="text-[10px] font-semibold tracking-[2.5px] uppercase text-gray-500">Compétences</h2>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        <div v-for="s in employee.skills" :key="s.id"
+                            class="inline-flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-full px-3.5 py-1.5 text-[12px] text-gray-800">
+                            <span class="font-medium">{{ s.skill_name }}</span>
+                            <span class="text-gray-400 text-[11px]">· {{ getLevelSkillLabel(s.level) }}</span>
+                        </div>
+                    </div>
+                </section>
+
             </div>
-            <div class="rounded-2xl border border-emerald-400/20 bg-emerald-400/10 p-5">
-              <p class="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-200">Dernier contrat</p>
-              <p class="mt-2 text-sm font-semibold text-white">{{ displayValue(latestContract?.contract_type) }}</p>
-              <p class="mt-1 text-sm text-emerald-50">
-                Debut: {{ displayValue(latestContract?.contract_start) }} | Lieu: {{ displayValue(latestContract?.work_location) }}
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
 
-      <section class="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-        <article class="rounded-[2rem] border border-slate-200 bg-white p-8 shadow-sm">
-          <p class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Coordonnees</p>
-          <div class="mt-6 space-y-4 text-sm text-slate-700">
-            <p><span class="font-black text-slate-900">Telephone:</span> {{ displayValue(employee.coordinates?.phone_number) }}</p>
-            <p><span class="font-black text-slate-900">Adresse:</span> {{ displayValue(employee.coordinates?.home_address) }}</p>
-            <p><span class="font-black text-slate-900">Urgence:</span> {{ displayValue(employee.coordinates?.emergency_contact_name) }}</p>
-            <p><span class="font-black text-slate-900">Numero urgence:</span> {{ displayValue(employee.coordinates?.emergency_contact_phone) }}</p>
-          </div>
-        </article>
-
-        <article class="rounded-[2rem] border border-slate-200 bg-white p-8 shadow-sm">
-          <p class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Administratif</p>
-          <div class="mt-6 space-y-4 text-sm text-slate-700">
-            <p><span class="font-black text-slate-900">CIN:</span> {{ displayValue(employee.administrative_info?.cin_number) }}</p>
-            <p><span class="font-black text-slate-900">Delivree le:</span> {{ displayValue(employee.administrative_info?.cin_issue_date) }}</p>
-            <p><span class="font-black text-slate-900">Lieu:</span> {{ displayValue(employee.administrative_info?.cin_issue_place) }}</p>
-            <p><span class="font-black text-slate-900">NIF:</span> {{ displayValue(employee.administrative_info?.nif) }}</p>
-            <p><span class="font-black text-slate-900">STAT:</span> {{ displayValue(employee.administrative_info?.stat) }}</p>
-          </div>
-        </article>
-
-        <article class="rounded-[2rem] border border-slate-200 bg-white p-8 shadow-sm">
-          <p class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Banque</p>
-          <div class="mt-6 space-y-4 text-sm text-slate-700">
-            <p><span class="font-black text-slate-900">Mode:</span> {{ displayValue(employee.bank_info?.payment_method) }}</p>
-            <p><span class="font-black text-slate-900">Banque:</span> {{ displayValue(employee.bank_info?.bank_name) }}</p>
-            <p><span class="font-black text-slate-900">Compte:</span> {{ displayValue(employee.bank_info?.account_number) }}</p>
-            <p><span class="font-black text-slate-900">RIB:</span> {{ displayValue(employee.bank_info?.rib) }}</p>
-          </div>
-        </article>
-      </section>
-
-      <section class="grid gap-6 xl:grid-cols-[1.2fr_1fr]">
-        <div class="rounded-[2rem] border border-slate-200 bg-white p-8 shadow-sm">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Competences</p>
-              <h2 class="mt-2 text-xl font-black text-slate-900">Apercu des skills</h2>
-            </div>
-            <span class="rounded-full bg-amber-50 px-4 py-2 text-xs font-black uppercase tracking-[0.2em] text-amber-700">
-              {{ employee.skills?.length ?? 0 }} enregistrees
-            </span>
-          </div>
-
-          <div class="mt-6 flex flex-wrap gap-3">
+            <!-- PIED DE PAGE -->
             <div
-              v-for="skill in skillHighlights"
-              :key="`${skill.skill_name}-${skill.level}`"
-              class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"
-            >
-              <p class="text-sm font-black text-slate-900">{{ displayValue(skill.skill_name) }}</p>
-              <p class="mt-1 text-xs uppercase tracking-[0.2em] text-slate-500">{{ displayValue(skill.level) }}</p>
+                class="bg-gray-50 border-t border-gray-200 px-10 py-3.5 text-center text-[10px] text-gray-400 tracking-wide">
+                Document confidentiel — Généré automatiquement le {{ new Date().toLocaleDateString('fr-FR') }} —
+                Ressources Humaines
             </div>
-            <p v-if="skillHighlights.length === 0" class="text-sm text-slate-500">Aucune competence renseignee pour le moment.</p>
-          </div>
-        </div>
 
-        <div class="rounded-[2rem] border border-slate-200 bg-white p-8 shadow-sm">
-          <p class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Formation</p>
-          <h2 class="mt-2 text-xl font-black text-slate-900">Resume du parcours</h2>
-
-          <div class="mt-6 space-y-4">
-            <div class="rounded-2xl bg-slate-50 p-5">
-              <p class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Diplomes</p>
-              <p class="mt-2 text-sm font-semibold text-slate-800">{{ employee.degrees?.length ?? 0 }} element(s)</p>
-            </div>
-            <div class="rounded-2xl bg-slate-50 p-5">
-              <p class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Formations</p>
-              <p class="mt-2 text-sm font-semibold text-slate-800">{{ employee.trainings?.length ?? 0 }} element(s)</p>
-            </div>
-            <div class="rounded-2xl bg-slate-50 p-5">
-              <p class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Contrats</p>
-              <p class="mt-2 text-sm font-semibold text-slate-800">{{ employee.contracts?.length ?? 0 }} element(s)</p>
-            </div>
-          </div>
         </div>
-      </section>
-    </template>
-  </div>
+    </div>
 </template>

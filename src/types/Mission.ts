@@ -1,7 +1,9 @@
 export interface Mission {
-    id?: number,
-    employee: string,
-    mission_date: string,
-    description: string,
-    location?: string,
+  id?: number
+  employee: string
+  mission_start: string
+  mission_end: string
+  duration: number
+  project: string
+  activity?: string
 }

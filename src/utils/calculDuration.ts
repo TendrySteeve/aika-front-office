@@ -1,25 +1,24 @@
-import { PERIOD_CHOICES } from "@/enums/choices";
-import type { AuthorizationRequest } from "@/types/Authorization";
-import type { Leave } from "@/types/Leave";
+import { PERIOD_CHOICES } from '@/enums/choices'
 
-export const calculatedHourDuration = (authorization: Partial<AuthorizationRequest>) => {
-    if (!authorization.departure_time || !authorization.return_time) return 0;
+export const calculatedHourDuration = (departure_time: string, return_time: string) => {
+  if (!departure_time || !return_time) return 0
 
-    const [startH, startM] = authorization.departure_time.split(':').map(Number);
-    const [endH, endM] = authorization.return_time.split(':').map(Number);
+  const parseTime = (time: string) => {
+    const parts = time.split(':').map(Number)
+    const [h = 0, m = 0] = parts
+    return h * 60 + m
+  }
 
-    let startInMinutes = 0;
-    let endInMinutes = 0;
+  const startInMinutes = parseTime(departure_time)
+  const endInMinutes = parseTime(return_time)
 
-    if (startH && startM) startInMinutes = startH * 60 + startM;
-    if (endH && endM) endInMinutes = endH * 60 + endM;
+  let diffInMinutes = endInMinutes - startInMinutes
+  if (diffInMinutes < 0) {
+    diffInMinutes += 24 * 60
+  }
 
-    if (endInMinutes <= startInMinutes) return 0;
-
-    const diffInMinutes = endInMinutes - startInMinutes;
-    return parseFloat((diffInMinutes / 60).toFixed(2));
-};
-
+  return parseFloat((diffInMinutes / 60).toFixed(2))
+}
 
 export const calculatedDayDuration = (params: {
   start: string

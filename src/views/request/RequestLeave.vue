@@ -5,10 +5,13 @@ import type { Leave } from '@/types/Leave';
 import { getStatusStyle } from '@/utils/styleUtils';
 import { calculatedDayDuration } from '@/utils/calculDuration';
 import LeaveServices from '@/services/LeaveServices';
+import ButtonSubmit from '@/components/UI/ButtonSubmit.vue';
+import LoadingItems from '@/components/LoadingItems.vue';
 
 const leaves = ref<Leave[]>([]);
 const employee = ref<string>('');
-
+const loadingSubmit = ref(false);
+const loading = ref(false);
 const leaveOnCreate = ref<Leave>({
     employee: '',
     date_request: String(new Date().toISOString().split('T')[0]),
@@ -22,21 +25,24 @@ const leaveOnCreate = ref<Leave>({
 });
 
 const duration = computed(() => calculatedDayDuration({
-  start: leaveOnCreate.value.leave_start,
-  end: leaveOnCreate.value.leave_end,
-  period_start: leaveOnCreate.value.start_period,
-  period_end: leaveOnCreate.value.end_period,
+    start: leaveOnCreate.value.leave_start,
+    end: leaveOnCreate.value.leave_end,
+    period_start: leaveOnCreate.value.start_period,
+    period_end: leaveOnCreate.value.end_period,
 }));
 
 async function fetchEmployeeLeaves() {
     const matricule = localStorage.getItem('matricule');
     if (!matricule) return 'Aucun employé conneté'
     employee.value = matricule;
+    loading.value = true;
     try {
         const res = await LeaveServices.getEmployeeLeaves(matricule);
         leaves.value = res;
     } catch (error) {
 
+    } finally {
+        loading.value = false
     }
 }
 
@@ -46,22 +52,24 @@ const createLeave = async () => {
         employee: employee.value,
         duration: duration.value
     }
-
+    loadingSubmit.value = true;
     try {
         await LeaveServices.post(leaveOnCreate.value)
         await fetchEmployeeLeaves()
     } catch (error) {
 
+    } finally {
+        loadingSubmit.value = false;
     }
 }
 
-const cancelEmployeeLeave = async (id?: number) => { 
+const cancelEmployeeLeave = async (id?: number) => {
     if (!id) return 'aucun identifiant du congé'
     try {
         await LeaveServices.cancelLeave(id);
         await fetchEmployeeLeaves()
     } catch (error) {
-        
+
     }
 }
 
@@ -83,7 +91,9 @@ onMounted(fetchEmployeeLeaves)
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 gap-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+            <LoadingItems v-if="loading" />
+
+            <div class="grid grid-cols-1 gap-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar" v-else>
                 <div v-for="leave in leaves" :key="leave.id"
                     class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm hover:shadow-md transition-all group relative overflow-hidden">
 
@@ -238,16 +248,15 @@ onMounted(fetchEmployeeLeaves)
                     </div>
 
                     <div class="space-y-2">
-                        <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Motif du congé</label>
+                        <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Motif du
+                            congé</label>
                         <textarea v-model="leaveOnCreate.reason" rows="4"
                             placeholder="Expliquez brièvement la raison..."
                             class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-5 py-4 text-sm font-medium outline-0 focus:border-blue-500 focus:bg-white"></textarea>
                     </div>
 
-                    <button type="submit"
-                        class="w-full px-6 py-3 rounded-2xl bg-blue-600 text-white border border-blue-500 hover:bg-blue-700 font-black text-[10px] uppercase tracking-widest shadow-lg shadow-blue-100 transition-all duration-300">
-                        Envoyer la demande
-                    </button>
+                    <ButtonSubmit :loading="loadingSubmit" submit-label="Soumettre"></ButtonSubmit>
+
                 </form>
             </div>
         </div>

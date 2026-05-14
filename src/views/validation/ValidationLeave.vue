@@ -3,15 +3,19 @@ import { onMounted, ref } from 'vue';
 import type { Leave } from '@/types/Leave';
 import { STATUS_CHOICES, PERIOD_CHOICES } from "@/enums/choices";
 import LeaveServices from '@/services/LeaveServices';
+import LoadingItems from '@/components/LoadingItems.vue';
 
 const pendingLeaves = ref<Leave[]>([]);
-
+const loading = ref(false);
 async function fetchPerndingLeaves() {
+    loading.value = true;
     try {
         const res = await LeaveServices.getPendingLeaves();
         pendingLeaves.value = res;
     } catch (error) {
 
+    } finally {
+        loading.value = false;
     }
 }
 
@@ -40,7 +44,8 @@ onMounted(fetchPerndingLeaves);
 <template>
     <div class="space-y-6">
         <div class="flex-1 overflow-y-auto max-h-[75vh] pr-2 custom-scrollbar">
-            <div class="grid grid-cols-1 gap-4">
+            <LoadingItems v-if="loading" />
+            <div class="grid grid-cols-1 gap-4" v-else>
                 <div v-if="pendingLeaves.length === 0" class="text-center py-10 text-slate-400 italic">
                     Aucune demande de congé en attente.
                 </div>
